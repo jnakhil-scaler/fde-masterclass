@@ -23,14 +23,15 @@ load_dotenv()
 
 _client = None
 
-OPENROUTER_MODEL = "anthropic/claude-sonnet-5"
+OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-sonnet-5")
 
 
 def has_real_api_key() -> bool:
     """Distinguishes a real OpenRouter key from the .env.example placeholder
-    ('sk-ant-...', 10 chars) so tests skip cleanly instead of failing with
-    an auth error when only the placeholder is present. OpenRouter keys
-    start with 'sk-or-v1-'."""
+    ('sk-or-v1-...', 12 chars) so tests skip cleanly instead of failing with
+    an auth error when only the placeholder is present. Real OpenRouter keys
+    are much longer and share the same 'sk-or-v1-' prefix as the placeholder,
+    so length is what actually distinguishes them."""
     key = os.environ.get("ANTHROPIC_API_KEY", "")
     return len(key) > 20 and key.startswith("sk-or-v1-")
 
@@ -66,7 +67,15 @@ def call_with_tool(system: str, user_message: str, tool_schema: dict) -> dict:
         }],
         tool_choice={"type": "function", "function": {"name": tool_name}},
     )
+    if not response.choices:
+        raise ValueError(f"OpenRouter returned no choices for tool {tool_name!r}")
     message = response.choices[0].message
     if not message.tool_calls:
-        raise ValueError("Model did not return a tool call")
-    return json.loads(message.tool_calls[0].function.arguments)
+        raise ValueError(f"Model did not return a tool call for {tool_name!r}")
+    raw_arguments = message.tool_calls[0].function.arguments
+    try:
+        return json.loads(raw_arguments)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"Model returned malformed JSON for tool {tool_name!r}: {e}\nRaw: {raw_arguments!r}"
+        ) from e

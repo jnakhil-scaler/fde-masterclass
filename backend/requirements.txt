@@ -6,7 +6,7 @@ pydantic==2.9.2
 pandas==2.2.3
 faker==28.4.1
 openpyxl==3.1.5
-anthropic==0.34.2
+anthropic==0.34.2  # needed only by claude_client_anthropic_native.py (unused reference impl) -- do not remove
 openai==2.48.0
 python-dotenv==1.0.1
 pytest==8.3.3
