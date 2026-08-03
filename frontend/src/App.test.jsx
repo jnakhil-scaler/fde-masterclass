@@ -1,8 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import App from './App'
+import { api } from './api'
+
+vi.mock('./api')
 
 describe('App', () => {
+  beforeEach(() => {
+    api.getProducts.mockResolvedValue([])
+    api.getOrders.mockResolvedValue([])
+  })
+
   it('renders all four tabs and defaults to Overview', () => {
     render(<App />)
     expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument()

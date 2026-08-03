@@ -8,11 +8,11 @@ export default function Overview() {
   const [orders, setOrders] = useState([])
 
   useEffect(() => {
-    api.getProducts().then(setProducts)
-    api.getOrders().then(setOrders)
+    api.getProducts().then(setProducts).catch(() => {})
+    api.getOrders().then(setOrders).catch(() => {})
   }, [])
 
-  const lowStock = products.filter((p) => p.current_stock < LOW_STOCK_THRESHOLD)
+  const lowStock = products.filter((p) => p.current_stock < LOW_STOCK_THRESHOLD).slice(0, 5)
 
   return (
     <section>
