@@ -32,14 +32,15 @@ def clean_tally_dates_and_amounts(tally: pd.DataFrame) -> pd.DataFrame:
         return pd.NaT
 
     df["date"] = df["date"].apply(parse_date)
+    assert not df["date"].isna().any(), "some tally dates failed to parse — check date format assumptions"
     df["amount"] = (
         df["amount"].astype(str).str.replace("₹", "", regex=False).str.replace(",", "", regex=False).astype(float)
     )
     return df
 
 
-_LAKH_RE = re.compile(r"([\d.]+)\s*L", re.IGNORECASE)
-_K_RE = re.compile(r"([\d.]+)\s*k", re.IGNORECASE)
+_LAKH_RE = re.compile(r"(\d+(?:\.\d+)?)\s*L", re.IGNORECASE)
+_K_RE = re.compile(r"(\d+(?:\.\d+)?)\s*k", re.IGNORECASE)
 
 
 def _parse_amount_text(text: str) -> Optional[float]:
@@ -47,10 +48,16 @@ def _parse_amount_text(text: str) -> Optional[float]:
         return None
     lakh_match = _LAKH_RE.search(text)
     if lakh_match:
-        return round(float(lakh_match.group(1)) * 100_000, 2)
+        try:
+            return round(float(lakh_match.group(1)) * 100_000, 2)
+        except ValueError:
+            return None
     k_match = _K_RE.search(text)
     if k_match:
-        return round(float(k_match.group(1)) * 1_000, 2)
+        try:
+            return round(float(k_match.group(1)) * 1_000, 2)
+        except ValueError:
+            return None
     return None
 
 
@@ -58,4 +65,5 @@ def clean_khata_entries(khata: pd.DataFrame) -> pd.DataFrame:
     """Step 2 (§4.4): parse Hindi-English lakh/thousand shorthand into numeric amounts."""
     df = khata.copy()
     df["amount"] = df["amount_text"].apply(_parse_amount_text)
+    assert df["amount"].notna().all(), "some khata amounts failed to parse — check amount_text format assumptions"
     return df
