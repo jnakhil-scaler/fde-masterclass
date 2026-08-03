@@ -1,0 +1,165 @@
+import json
+from pathlib import Path
+import random
+
+import pandas as pd
+from faker import Faker
+
+OUTPUT_DIR = Path(__file__).parent / "raw"
+
+PRODUCT_CATALOG = [
+    ("Ambuja Cement", "Cement", "bag", 50, "2523"),
+    ("UltraTech Cement", "Cement", "bag", 50, "2523"),
+    ("TMT Sariya 10mm", "Steel", "ton", 1, "7213"),
+    ("TMT Sariya 12mm", "Steel", "ton", 1, "7213"),
+    ("PVC Pipe 1 inch", "Pipes", "piece", 1, "3917"),
+    ("GI Wire", "Electrical", "coil", 1, "8544"),
+    ("Asian Paints Emulsion", "Paints", "litre", 1, "3208"),
+]
+
+NAME_VARIANT_TEMPLATES = [
+    "{brand} {kg}kg",
+    "{lower} ({kg} KG)",
+    "{upper} {kg}KG",
+]
+
+
+def _name_variants(brand: str, kg: int = 50):
+    return [
+        NAME_VARIANT_TEMPLATES[0].format(brand=brand, kg=kg),
+        NAME_VARIANT_TEMPLATES[1].format(lower=brand.lower()[:9] + ".", kg=kg),
+        NAME_VARIANT_TEMPLATES[2].format(upper=brand.upper(), kg=kg),
+    ]
+
+
+def _generate_stock_register(fake: Faker, rng: random.Random) -> pd.DataFrame:
+    rows = []
+    for name, category, unit, _, hsn in PRODUCT_CATALOG:
+        variants = _name_variants(name) if category == "Cement" else [name]
+        for variant in variants:
+            rows.append({
+                "product_name": variant,
+                "category": category,
+                "unit": rng.choice([unit, unit + "s", unit.upper(), "BGS" if unit == "bag" else unit]),
+                "qty": rng.choice([rng.randint(10, 500), -rng.randint(1, 20)]),
+                "hsn_code": hsn,
+            })
+    # pad out to ~500 SKUs with generic hardware items
+    for _ in range(500 - len(rows)):
+        rows.append({
+            "product_name": fake.word().title() + " " + rng.choice(["Bolt", "Nut", "Hinge", "Clamp"]),
+            "category": "Hardware",
+            "unit": rng.choice(["piece", "pieces", "PCS"]),
+            "qty": rng.randint(0, 300),
+            "hsn_code": "7318",
+        })
+    df = pd.DataFrame(rows)
+    n = len(df)
+    split = n // 3
+    return {
+        "Sheet1": df.iloc[:split],
+        "Sheet2": df.iloc[split:2 * split],
+        "Sheet3": df.iloc[2 * split:],
+    }
+
+
+MONSOON_MONTHS = {4, 5, 6, 7}  # April-July: cement demand spike (§4.2)
+
+
+def _generate_tally_export(fake: Faker, rng: random.Random) -> pd.DataFrame:
+    """Produces 2 years of invoices. Each invoice is itemized to one product (a simplification of
+    the real brief's non-itemized Tally export) so Agent 4 has real per-product monthly history to
+    detect seasonality against — see §4.2's monsoon-seasonality golden path."""
+    date_formats = ["%d/%m/%y", "%d-%b-%Y"]
+    rows = []
+    for _ in range(3000):
+        date = fake.date_between(start_date="-2y", end_date="today")
+        is_cement = rng.random() < 0.4
+        product_name = rng.choice(["Ambuja Cement", "UltraTech Cement"]) if is_cement else rng.choice(
+            [p[0] for p in PRODUCT_CATALOG if p[1] != "Cement"]
+        )
+        base_qty = rng.randint(20, 80)
+        qty = base_qty * 3 if (is_cement and date.month in MONSOON_MONTHS) else base_qty
+        rows.append({
+            "date": date.strftime(rng.choice(date_formats)),
+            "customer": rng.choice(["CASH", fake.company()]),
+            "product_name": product_name,
+            "qty": qty,
+            "amount": f"₹{qty * rng.randint(340, 420):,}",
+            "gst_number": None if rng.random() < 0.3 else fake.bothify("22#####?#?#?#Z#"),
+        })
+    return pd.DataFrame(rows)
+
+
+def _generate_khata_ledger(fake: Faker, rng: random.Random) -> pd.DataFrame:
+    rows = []
+    customers = [fake.name() + " Contractor" for _ in range(339)] + ["Vinod Builders"]
+    for customer in customers:
+        entries = 1 if customer != "Vinod Builders" else 3
+        for _ in range(entries):
+            if customer == "Vinod Builders":
+                rows.append({
+                    "customer_name": customer,
+                    "date_text": "12 May",
+                    "amount_text": "4.1L overdue",
+                    "note": "bola hai jaldi de dega",
+                })
+            else:
+                rows.append({
+                    "customer_name": customer,
+                    "date_text": fake.date_this_year().strftime("%d %b"),
+                    "amount_text": rng.choice([f"{rng.randint(10,90)}k liya", f"{rng.randint(1,9)}.{rng.randint(0,9)}L"]),
+                    "note": rng.choice(["baaki agle mahine", "poora paid", ""]),
+                })
+    return pd.DataFrame(rows)
+
+
+def _generate_whatsapp_orders(fake: Faker, rng: random.Random) -> list:
+    messages = [{
+        "id": 1,
+        "raw_text": "bhai 10mm sariya 2 ton pipe 1 inch 50 piece cement ultratech 100 bag kal subah 7 baje Sharma site pe bhijwa dena",
+        "timestamp": "2026-08-01T18:22:00",
+    }]
+    for i in range(2, 201):
+        messages.append({
+            "id": i,
+            "raw_text": f"{fake.first_name()} bhai {rng.randint(5,100)} bag cem chahiye kal tak",
+            "timestamp": fake.date_time_this_year().isoformat(),
+        })
+    return messages
+
+
+def _generate_supplier_rates(fake: Faker, rng: random.Random) -> pd.DataFrame:
+    rows = []
+    for s in range(1, 13):
+        supplier = f"Supplier {s}"
+        for name, _, unit, _, _ in PRODUCT_CATALOG:
+            rows.append({
+                "supplier_name": supplier,
+                "product_name": name,
+                "price": rng.choice([f"{rng.randint(300,450)}/bag", "call for rate"]),
+                "unit": unit,
+                "as_of_date": fake.date_between(start_date="-6M", end_date="today").isoformat(),
+                "discount_text": rng.choice(["", "5% above 500 bags", "2% cash discount"]),
+            })
+    return pd.DataFrame(rows)
+
+
+def generate_all(seed: int = 42):
+    fake = Faker()
+    Faker.seed(seed)
+    rng = random.Random(seed)
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    with pd.ExcelWriter(OUTPUT_DIR / "stock_register.xlsx") as writer:
+        for sheet_name, sheet_df in _generate_stock_register(fake, rng).items():
+            sheet_df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    _generate_tally_export(fake, rng).to_csv(OUTPUT_DIR / "tally_export.csv", index=False)
+    _generate_khata_ledger(fake, rng).to_csv(OUTPUT_DIR / "khata_ledger.csv", index=False)
+    (OUTPUT_DIR / "whatsapp_orders.json").write_text(json.dumps(_generate_whatsapp_orders(fake, rng), indent=2))
+    _generate_supplier_rates(fake, rng).to_csv(OUTPUT_DIR / "supplier_rates.csv", index=False)
+
+
+if __name__ == "__main__":
+    generate_all()
