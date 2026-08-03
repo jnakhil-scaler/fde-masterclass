@@ -1,1 +1,9 @@
 .worktrees/
+
+backend/.venv/
+backend/app/data/raw/
+__pycache__/
+*.pyc
+.env
+frontend/node_modules/
+frontend/dist/
