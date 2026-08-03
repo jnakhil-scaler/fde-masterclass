@@ -4,7 +4,14 @@
 
 This is the reference build for the Scaler Academy "Real FDE Simulation" masterclass (see `FDE_Masterclass_Problem_Statement.html` for the full brief). The fictional client, Gupta Building Materials, runs a ₹12 Cr MSME distribution business on Excel, Tally, a handwritten khata, and WhatsApp. The masterclass modernizes this into a unified data + API + dashboard + AI system.
 
-**Session format:** hybrid. The data layer, backend, and frontend are built and deployed *before* the live session, fully working. The 4 AI agents are also built and tested in advance as a reference implementation, but are *live-coded* (narrated/typed from the tested reference) during the 3-hour class itself, so the "AI" part of the demo happens in front of the audience without risking the plumbing underneath it.
+**Session format:** hybrid, with everything pre-built today so nothing is written from scratch live — but each layer is *presented* differently in the 3-hour class:
+
+1. **Narrative framing (no code)** — before touching anything, set up the problem for the learners: what "6 disconnected islands of data" means, how an FDE approaches this kind of mess, and the plan for the next 3 hours.
+2. **Data unification — live walkthrough + live run.** The raw-to-Postgres script is pre-built and pre-tested today, but in class it's actually *re-run live* against the raw files (not just shown as a finished result), with a code walkthrough narrating each step as it executes. See §4.4 for the step sequence this walkthrough follows.
+3. **Backend + frontend — code walkthrough of the pre-built, already-deployed system.** These are not re-coded or re-run live; the presenter walks through the code and the working dashboard on the deployed Railway URL, explaining the architecture choices.
+4. **AI agents — live-coded.** All 4 agents are built and tested in advance as a reference implementation, but in class they're live-coded (narrated/typed from the tested reference), so the "AI" part of the demo happens in front of the audience without risking the plumbing underneath it.
+
+See §11 for the lecture script that ties these four phases together with timing.
 
 ## 2. Goals / Non-Goals
 
@@ -12,6 +19,7 @@ This is the reference build for the Scaler Academy "Real FDE Simulation" masterc
 - A single deployed URL, working end-to-end, that survives a live audience demo without surprises.
 - All 4 agents tested against the real Claude API today, so tomorrow's live coding has a known-good reference to work from.
 - Guaranteed "wow moments" — specific seeded data that reliably reproduces the demo scenarios from the brief (not left to random chance).
+- At the end of code generation and project implementation, produce a lecture script covering the entire masterclass, from scoping through implementation to the live URL phase (see §11).
 
 **Non-Goals:**
 - Production-grade auth, multi-tenancy, or real customer data — this is a demo build for a single fictional client.
@@ -73,6 +81,16 @@ The following are deliberately seeded (not left to random generation) so the liv
 
 **Decision: Postgres only, no separate NoSQL store.** At ~200 WhatsApp records, there's no scale or schema-flexibility need that a JSONB column doesn't already cover. A second data store (e.g. MongoDB) would double the infrastructure surface (a second provisioned service, a second credential, a second failure mode) for no benefit at this size — a bad trade for a live demo where fewer moving parts is a feature.
 
+### 4.4 Raw-to-Postgres steps (the live walkthrough sequence)
+
+This is the step sequence the data-unification script follows — it's written to be run and narrated step by step in class, not just executed as one opaque batch job:
+
+1. **Extract** — read each raw file (`stock_register.xlsx`, `tally_export.csv`, `khata_ledger.csv`, `whatsapp_orders.json`, `supplier_rates.csv`) into a pandas DataFrame per source, unchanged.
+2. **Deterministic cleanup** — fix what a script can fix without judgment calls: parse mixed date formats, strip ₹/commas from amounts, standardize obvious unit spellings, drop fully-empty rows.
+3. **Ambiguous-case resolution (Agent 1)** — hand the still-ambiguous product name variants to the cleaning agent to dedupe and map to the catalog; this is the "AI handled what no regex could" moment, shown as a before/after diff.
+4. **Load** — insert into the unified Postgres schema (§4.3), one source at a time, in dependency order (products → customers/suppliers → orders/invoices/credit_ledger/rate_cards/whatsapp_messages).
+5. **Verify** — run row-count and spot-check queries against Postgres to confirm the load matches expectations, live, so the audience sees the unified data land correctly.
+
 ## 5. Backend — FastAPI
 
 - `GET/POST /products`, `/customers`, `/suppliers`, `/rate-cards`
@@ -119,5 +137,17 @@ Before this is considered done today:
 
 ## 10. Timeline
 
-- **Today:** generate datasets → build ingestion/cleaning → unified schema + backend → frontend dashboard → build & test all 4 agents → deploy to Railway → full rehearsal on the live URL.
-- **Tomorrow (live, 3 hours):** present the pre-built data/backend/frontend layers, then live-code the 4 agents on top of the stable foundation using today's tested reference.
+- **Today:** generate datasets → build ingestion/cleaning (§4.4) → unified schema + backend → frontend dashboard → build & test all 4 agents → deploy to Railway → full rehearsal on the live URL → write the lecture script (§11).
+- **Tomorrow (live, 3 hours):** narrative framing → live walkthrough + live run of the data-unification script → code walkthrough of the deployed backend/frontend → live-code the 4 agents against the seeded golden-path scenarios.
+
+## 11. Lecture Script Deliverable
+
+A standalone presenter script, written last (after everything above is built, deployed, and rehearsed), covering the full 3-hour class end to end. This is what the presenter actually reads from/rehearses with — not just a recap of the spec.
+
+**Contents:**
+- **Opening narrative (no code shown yet)** — frames the problem the way §1 does for the reader of this spec, but written to be *said aloud* to learners: the 6 disconnected data islands, the "bus factor is 1" risk, and the plan for the next 3 hours.
+- **Phase 1 script — data unification** — narration for each of the 5 steps in §4.4 as they're run live, including what to say while the audience watches Agent 1 resolve an ambiguous product-name case.
+- **Phase 2 script — backend/frontend walkthrough** — a guided tour of the code and the live dashboard on the deployed URL, keyed to specific files/endpoints, not just "here's the API."
+- **Phase 3 script — live agent coding** — talking points and the exact reference code to narrate/type for each of the 4 agents, including the seeded golden-path moments (Vinod Builders, the fixed WhatsApp message, the monsoon forecast) called out as "this is the payoff" beats.
+- **Timing** — each phase budgeted against the 3-hour window, with explicit checkpoints so the presenter knows if they're running behind.
+- **Closing** — the before/after table (§ mirrors the brief's "Before vs After") as the takeaway summary for learners.
