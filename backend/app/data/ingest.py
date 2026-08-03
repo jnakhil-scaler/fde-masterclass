@@ -88,7 +88,11 @@ def resolve_ambiguous_products(stock: pd.DataFrame) -> list[dict]:
     qty_by_key = {}
     unique_names = stock["product_name"].unique()
     for i, raw_name in enumerate(unique_names, 1):
-        cleaned = clean_product_name(raw_name)
+        try:
+            cleaned = clean_product_name(raw_name)
+        except Exception as e:
+            print(f"    ...skipping {raw_name!r}: {e}")
+            continue
         key = (cleaned["name"], cleaned["variant"])
         seen[key] = cleaned
         raw_qty = stock.loc[stock["product_name"] == raw_name, "qty"].sum()
