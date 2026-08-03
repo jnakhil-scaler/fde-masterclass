@@ -27,7 +27,7 @@ def _name_variants(brand: str, kg: int = 50):
     ]
 
 
-def _generate_stock_register(fake: Faker, rng: random.Random) -> dict[str, pd.DataFrame]:
+def _generate_stock_register(fake: Faker, rng: random.Random, total_skus: int = 500) -> dict[str, pd.DataFrame]:
     rows = []
     for name, category, unit, _, hsn in PRODUCT_CATALOG:
         variants = _name_variants(name) if category == "Cement" else [name]
@@ -41,8 +41,10 @@ def _generate_stock_register(fake: Faker, rng: random.Random) -> dict[str, pd.Da
                 "qty": rng.choice([rng.randint(10, 500), -rng.randint(1, 20)]),
                 "hsn_code": hsn,
             })
-    # pad out to ~500 SKUs with generic hardware items
-    for _ in range(500 - len(rows)):
+    # pad out to `total_skus` SKUs (default ~500) with generic hardware items.
+    # A negative range() is already a no-op, so if total_skus is smaller than the
+    # real catalog row count above, this loop simply contributes zero rows.
+    for _ in range(max(0, total_skus - len(rows))):
         rows.append({
             "product_name": fake.word().title() + " " + rng.choice(["Bolt", "Nut", "Hinge", "Clamp"]),
             "category": "Hardware",
@@ -142,14 +144,14 @@ def _generate_supplier_rates(fake: Faker, rng: random.Random) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def generate_all(seed: int = 42):
+def generate_all(seed: int = 42, total_skus: int = 500):
     fake = Faker()
     Faker.seed(seed)
     rng = random.Random(seed)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     with pd.ExcelWriter(OUTPUT_DIR / "stock_register.xlsx") as writer:
-        for sheet_name, sheet_df in _generate_stock_register(fake, rng).items():
+        for sheet_name, sheet_df in _generate_stock_register(fake, rng, total_skus=total_skus).items():
             sheet_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     _generate_tally_export(fake, rng).to_csv(OUTPUT_DIR / "tally_export.csv", index=False)
@@ -159,4 +161,10 @@ def generate_all(seed: int = 42):
 
 
 if __name__ == "__main__":
-    generate_all()
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate the 5 raw messy datasets for Gupta Building Materials.")
+    parser.add_argument("--total-skus", type=int, default=500, help="Number of SKU rows in the stock register (default: 500, full realistic scale). Use a smaller number (e.g. 70) for a fast live-demo run.")
+    parser.add_argument("--seed", type=int, default=42)
+    args = parser.parse_args()
+    generate_all(seed=args.seed, total_skus=args.total_skus)

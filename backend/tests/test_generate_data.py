@@ -43,3 +43,12 @@ def test_tally_export_has_monsoon_cement_spike():
     monsoon_avg = cement[cement["date"].dt.month.isin([4, 5, 6, 7])]["qty"].mean()
     off_season_avg = cement[~cement["date"].dt.month.isin([4, 5, 6, 7])]["qty"].mean()
     assert monsoon_avg > off_season_avg * 1.5
+
+
+def test_generate_all_respects_smaller_total_skus_for_live_demo():
+    generate_all(seed=42, total_skus=70)
+    sheets = pd.read_excel(OUTPUT_DIR / "stock_register.xlsx", sheet_name=None)
+    all_rows = pd.concat(sheets.values())
+    assert len(all_rows) == 70
+    ambuja_variants = all_rows[all_rows["product_name"].str.contains("mbuja", case=False, na=False)]
+    assert ambuja_variants["product_name"].nunique() >= 3
