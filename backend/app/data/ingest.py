@@ -75,10 +75,13 @@ def clean_khata_entries(khata: pd.DataFrame) -> pd.DataFrame:
 def resolve_ambiguous_products(stock: pd.DataFrame) -> list[dict]:
     """Step 3 (§4.4): hand ambiguous product names to Agent 1, dedupe by (name, variant)."""
     seen = {}
-    for raw_name in stock["product_name"].unique():
+    unique_names = stock["product_name"].unique()
+    for i, raw_name in enumerate(unique_names, 1):
         cleaned = clean_product_name(raw_name)
         key = (cleaned["name"], cleaned["variant"])
         seen[key] = cleaned
+        if i % 25 == 0 or i == len(unique_names):
+            print(f"    ...{i}/{len(unique_names)} processed")
     return list(seen.values())
 
 
@@ -129,7 +132,13 @@ def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, what
     db.flush()
 
     db.commit()
-    return {"products": len(products), "customers": len(customers_by_name), "invoices": len(tally), "whatsapp": len(whatsapp)}
+    return {
+        "products": len(products),
+        "customers": len(customers_by_name),
+        "invoices": len(tally),
+        "whatsapp": len(whatsapp),
+        "suppliers": len(suppliers_by_name),
+    }
 
 
 def verify(db) -> dict:
@@ -140,11 +149,16 @@ def verify(db) -> dict:
         "invoices": db.query(Invoice).count(),
         "credit_entries": db.query(CreditLedger).count(),
         "whatsapp_messages": db.query(WhatsappMessage).count(),
+        "suppliers": db.query(Supplier).count(),
     }
 
 
 if __name__ == "__main__":
-    from app.db import SessionLocal
+    from app.db import SessionLocal, Base, engine
+
+    print("Resetting schema...")
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
 
     print("Step 1/5: extract...")
     raw = extract()
@@ -158,10 +172,13 @@ if __name__ == "__main__":
     catalog = resolve_ambiguous_products(raw["stock"])
     print(f"  → {raw['stock']['product_name'].nunique()} raw names collapsed to {len(catalog)} products")
 
-    print("Step 4/5: loading into Postgres...")
     db = SessionLocal()
-    stats = load(db, catalog=catalog, tally=tally_clean, khata=khata_clean, whatsapp=raw["whatsapp"], rates=raw["rates"])
-    print(f"  → loaded {stats}")
+    try:
+        print("Step 4/5: loading into Postgres...")
+        stats = load(db, catalog=catalog, tally=tally_clean, khata=khata_clean, whatsapp=raw["whatsapp"], rates=raw["rates"])
+        print(f"  → loaded {stats}")
 
-    print("Step 5/5: verifying...")
-    print(f"  → {verify(db)}")
+        print("Step 5/5: verifying...")
+        print(f"  → {verify(db)}")
+    finally:
+        db.close()
