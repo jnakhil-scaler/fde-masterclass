@@ -18,7 +18,10 @@ class ParseOrderRequest(BaseModel):
 
 @router.post("/parse-order")
 def parse_order(payload: ParseOrderRequest):
-    return parse_whatsapp_order(payload.raw_text)
+    try:
+        return parse_whatsapp_order(payload.raw_text)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not parse the message: {e}")
 
 
 @router.get("/demand-forecast/{product_id}")
