@@ -21,6 +21,8 @@ See §11 for the lecture script that ties these four phases together with timing
 - Guaranteed "wow moments" — specific seeded data that reliably reproduces the demo scenarios from the brief (not left to random chance).
 - At the end of code generation and project implementation, produce a lecture script covering the entire masterclass, from scoping through implementation to the live URL phase (see §11).
 
+**Guiding principle:** every deliverable — code, demo data, and the lecture script — is judged on two axes together, not traded off against each other: **engaging** (the audience should feel a "wow" at each phase transition, not just at the end) and **technically accurate** (no hand-waved architecture, no fudged numbers, no agent output that isn't actually reproducible from the seeded data). Concretely: the §4.2 golden-path scenarios exist so the wow moments are guaranteed *and* real; the §11 lecture script must call out the specific wow beat at each phase, not just narrate code.
+
 **Non-Goals:**
 - Production-grade auth, multi-tenancy, or real customer data — this is a demo build for a single fictional client.
 - General-purpose ERP features beyond what the brief's 6 functions require.
