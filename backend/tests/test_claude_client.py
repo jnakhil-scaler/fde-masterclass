@@ -5,17 +5,24 @@ from app.agents.claude_client import has_real_api_key
 # whether a real ANTHROPIC_API_KEY is present. Keeping it out of
 # test_agent_cleaning.py (which has a module-level skipif) is what makes that
 # possible.
+#
+# The env var is still named ANTHROPIC_API_KEY (unchanged, so .env/.env.example
+# don't need edits), but it now holds an OpenRouter key, which has a different
+# shape/prefix ('sk-or-v1-...') than a native Anthropic key ('sk-ant-...').
 
 
 def test_has_real_api_key_logic(monkeypatch):
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-...")
-    assert has_real_api_key() is False  # placeholder, too short
+    assert has_real_api_key() is False  # old Anthropic placeholder: too short AND wrong prefix now
 
     monkeypatch.setenv("ANTHROPIC_API_KEY", "")
     assert has_real_api_key() is False  # empty
 
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-" + "x" * 30)
-    assert has_real_api_key() is True  # long enough, right prefix
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-or-v1-" + "x" * 30)
+    assert has_real_api_key() is True  # long enough, right OpenRouter prefix
 
     monkeypatch.setenv("ANTHROPIC_API_KEY", "wrong-prefix-" + "x" * 30)
     assert has_real_api_key() is False  # long enough but wrong prefix
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-" + "x" * 30)
+    assert has_real_api_key() is False  # long enough but old Anthropic prefix, not OpenRouter's
