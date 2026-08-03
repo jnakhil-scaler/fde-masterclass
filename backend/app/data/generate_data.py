@@ -5,17 +5,9 @@ import random
 import pandas as pd
 from faker import Faker
 
-OUTPUT_DIR = Path(__file__).parent / "raw"
+from app.data.catalog import PRODUCT_CATALOG
 
-PRODUCT_CATALOG = [
-    ("Ambuja Cement", "Cement", "bag", 50, "2523"),
-    ("UltraTech Cement", "Cement", "bag", 50, "2523"),
-    ("TMT Sariya 10mm", "Steel", "ton", 1, "7213"),
-    ("TMT Sariya 12mm", "Steel", "ton", 1, "7213"),
-    ("PVC Pipe 1 inch", "Pipes", "piece", 1, "3917"),
-    ("GI Wire", "Electrical", "coil", 1, "8544"),
-    ("Asian Paints Emulsion", "Paints", "litre", 1, "3208"),
-]
+OUTPUT_DIR = Path(__file__).parent / "raw"
 
 # Fixed 3-template set, indexed positionally below (not a generic iterable) because each
 # template needs a differently-shaped substitution (full brand, abbreviated lowercase, upper).

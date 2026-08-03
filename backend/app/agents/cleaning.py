@@ -1,10 +1,12 @@
 from app.agents.claude_client import call_with_tool
+from app.data.catalog import HSN_BY_CATEGORY, KNOWN_BRANDS, KNOWN_CATEGORIES
 
-SYSTEM_PROMPT = """You clean messy Indian building-materials inventory data for Gupta Building Materials.
+_hsn_text = ", ".join(f"{category}={hsn}" for category, hsn in HSN_BY_CATEGORY.items())
+
+SYSTEM_PROMPT = f"""You clean messy Indian building-materials inventory data for Gupta Building Materials.
 Given one raw product name string exactly as it appears in a hand-maintained Excel sheet, return the
-normalized product it refers to. Known brands include Ambuja, UltraTech, Asian Paints. Categories include
-Cement, Steel, Pipes, Electrical, Paints, Hardware. HSN codes: Cement=2523, Steel=7213, Pipes=3917,
-Electrical=8544, Paints=3208, Hardware=7318."""
+normalized product it refers to. Known brands include {", ".join(KNOWN_BRANDS)}. Categories include
+{", ".join(KNOWN_CATEGORIES)}. HSN codes: {_hsn_text}."""
 
 TOOL_SCHEMA = {
     "name": "normalize_product",
