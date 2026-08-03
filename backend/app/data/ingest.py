@@ -5,6 +5,9 @@ from typing import Optional
 
 import pandas as pd
 
+from app.agents.cleaning import clean_product_name
+from app.models import Product, Customer, Supplier, SupplierRateCard, Invoice, CreditLedger, WhatsappMessage
+
 RAW_DIR = Path(__file__).parent / "raw"
 
 
@@ -67,3 +70,98 @@ def clean_khata_entries(khata: pd.DataFrame) -> pd.DataFrame:
     df["amount"] = df["amount_text"].apply(_parse_amount_text)
     assert df["amount"].notna().all(), "some khata amounts failed to parse — check amount_text format assumptions"
     return df
+
+
+def resolve_ambiguous_products(stock: pd.DataFrame) -> list[dict]:
+    """Step 3 (§4.4): hand ambiguous product names to Agent 1, dedupe by (name, variant)."""
+    seen = {}
+    for raw_name in stock["product_name"].unique():
+        cleaned = clean_product_name(raw_name)
+        key = (cleaned["name"], cleaned["variant"])
+        seen[key] = cleaned
+    return list(seen.values())
+
+
+def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, whatsapp: list[dict], rates: pd.DataFrame) -> dict:
+    """Step 4 (§4.4): insert into Postgres in dependency order."""
+    products = []
+    products_by_name = {}
+    for entry in catalog:
+        product = Product(name=entry["name"], brand=entry["brand"], category=entry["category"], unit="bag", hsn_code=entry["hsn"], current_stock=0)
+        db.add(product)
+        products.append(product)
+        products_by_name[entry["name"]] = product
+    db.flush()
+
+    customers_by_name = {}
+    for name in khata["customer_name"].unique():
+        customer = Customer(name=name)
+        db.add(customer)
+        customers_by_name[name] = customer
+    db.flush()
+
+    for _, row in khata.iterrows():
+        db.add(CreditLedger(
+            customer_id=customers_by_name[row["customer_name"]].id,
+            date=pd.Timestamp.now(),
+            type="debit",
+            amount=row["amount"] or 0,
+            note=row.get("note"),
+            source_raw=f"{row['date_text']} {row['amount_text']}",
+        ))
+
+    for _, row in tally.iterrows():
+        matched_product = products_by_name.get(row.get("product_name"))
+        db.add(Invoice(
+            date=row["date"], amount=row["amount"], gst_number=row.get("gst_number"), payment_status="unknown",
+            product_id=matched_product.id if matched_product else None,
+            qty=row.get("qty"),
+        ))
+
+    for msg in whatsapp:
+        db.add(WhatsappMessage(raw_text=msg["raw_text"], received_at=pd.Timestamp(msg["timestamp"])))
+
+    suppliers_by_name = {}
+    for name in rates["supplier_name"].unique():
+        supplier = Supplier(name=name)
+        db.add(supplier)
+        suppliers_by_name[name] = supplier
+    db.flush()
+
+    db.commit()
+    return {"products": len(products), "customers": len(customers_by_name), "invoices": len(tally), "whatsapp": len(whatsapp)}
+
+
+def verify(db) -> dict:
+    """Step 5 (§4.4): row-count check against Postgres, printed live during the walkthrough."""
+    return {
+        "products": db.query(Product).count(),
+        "customers": db.query(Customer).count(),
+        "invoices": db.query(Invoice).count(),
+        "credit_entries": db.query(CreditLedger).count(),
+        "whatsapp_messages": db.query(WhatsappMessage).count(),
+    }
+
+
+if __name__ == "__main__":
+    from app.db import SessionLocal
+
+    print("Step 1/5: extract...")
+    raw = extract()
+    print(f"  → stock: {len(raw['stock'])} rows, tally: {len(raw['tally'])} rows, khata: {len(raw['khata'])} rows")
+
+    print("Step 2/5: deterministic cleanup...")
+    tally_clean = clean_tally_dates_and_amounts(raw["tally"])
+    khata_clean = clean_khata_entries(raw["khata"])
+
+    print("Step 3/5: resolving ambiguous product names via Agent 1...")
+    catalog = resolve_ambiguous_products(raw["stock"])
+    print(f"  → {raw['stock']['product_name'].nunique()} raw names collapsed to {len(catalog)} products")
+
+    print("Step 4/5: loading into Postgres...")
+    db = SessionLocal()
+    stats = load(db, catalog=catalog, tally=tally_clean, khata=khata_clean, whatsapp=raw["whatsapp"], rates=raw["rates"])
+    print(f"  → loaded {stats}")
+
+    print("Step 5/5: verifying...")
+    print(f"  → {verify(db)}")
