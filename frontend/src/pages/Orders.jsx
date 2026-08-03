@@ -5,14 +5,24 @@ export default function Orders() {
   const [orders, setOrders] = useState([])
   const [rawText, setRawText] = useState('')
   const [parsed, setParsed] = useState(null)
+  const [parseError, setParseError] = useState(null)
+  const [isParsing, setIsParsing] = useState(false)
 
   useEffect(() => {
-    api.getOrders().then(setOrders)
+    api.getOrders().then(setOrders).catch(() => {})
   }, [])
 
   const handleParse = async () => {
-    const result = await api.parseOrder(rawText)
-    setParsed(result)
+    setIsParsing(true)
+    setParseError(null)
+    try {
+      const result = await api.parseOrder(rawText)
+      setParsed(result)
+    } catch (err) {
+      setParseError('Could not parse this message. Please try again.')
+    } finally {
+      setIsParsing(false)
+    }
   }
 
   return (
@@ -21,8 +31,11 @@ export default function Orders() {
       <div>
         <label htmlFor="whatsapp-input">Paste WhatsApp message</label>
         <textarea id="whatsapp-input" value={rawText} onChange={(e) => setRawText(e.target.value)} />
-        <button onClick={handleParse}>Parse order</button>
+        <button onClick={handleParse} disabled={!rawText.trim() || isParsing}>
+          {isParsing ? 'Parsing…' : 'Parse order'}
+        </button>
       </div>
+      {parseError && <div role="alert">{parseError}</div>}
       {parsed && (
         <div>
           <p>Delivery: {parsed.delivery_address} — {parsed.delivery_time}</p>

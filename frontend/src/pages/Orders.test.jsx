@@ -25,4 +25,13 @@ describe('Orders', () => {
     await waitFor(() => expect(screen.getByText(/Sharma site/)).toBeInTheDocument())
     expect(screen.getByText(/TMT Sariya 10mm/)).toBeInTheDocument()
   })
+
+  it('shows an error message if parsing fails', async () => {
+    api.parseOrder.mockRejectedValue(new Error('API error'))
+    render(<Orders />)
+    fireEvent.change(screen.getByLabelText(/paste whatsapp message/i), { target: { value: 'test message' } })
+    fireEvent.click(screen.getByRole('button', { name: /parse/i }))
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument())
+  })
 })
