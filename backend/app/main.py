@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import products, customers, suppliers, orders, credit
+from app.routers import products, customers, suppliers, orders, credit, agents
 
 app = FastAPI(title="Gupta Building Materials API")
 
@@ -9,6 +9,7 @@ app.include_router(customers.router)
 app.include_router(suppliers.router)
 app.include_router(orders.router)
 app.include_router(credit.router)
+app.include_router(agents.router)
 
 
 @app.get("/health")
