@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.agents.credit_risk import assess_credit_risk
@@ -12,6 +12,10 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 
 @router.post("", status_code=201)
 def create_order(payload: OrderIn, db: Session = Depends(get_db)):
+    customer = db.query(Customer).filter_by(id=payload.customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
     order = Order(customer_id=payload.customer_id, source=payload.source,
                   delivery_address=payload.delivery_address, delivery_time=payload.delivery_time)
     for item in payload.items:
@@ -21,10 +25,12 @@ def create_order(payload: OrderIn, db: Session = Depends(get_db)):
     db.refresh(order)
 
     new_order_amount = sum(item.qty * item.unit_price for item in payload.items)
-    customer = db.query(Customer).filter_by(id=payload.customer_id).first()
     aging = compute_aging(db, payload.customer_id)
-    risk = assess_credit_risk(customer.name, aging["total_outstanding"], aging["oldest_days_overdue"], new_order_amount)
-    risk["total_exposure"] = aging["total_outstanding"] + new_order_amount  # deterministic, don't trust the model's echo
+    try:
+        risk = assess_credit_risk(customer.name, aging["total_outstanding"], aging["oldest_days_overdue"], new_order_amount)
+        risk["total_exposure"] = aging["total_outstanding"] + new_order_amount  # deterministic, don't trust the model's echo
+    except Exception as e:
+        risk = {"risk_level": "unknown", "total_exposure": aging["total_outstanding"] + new_order_amount, "recommendation": f"Credit check unavailable: {e}"}
 
     return {"id": order.id, "customer_id": order.customer_id, "status": order.status, "source": order.source, "credit_risk": risk}
 

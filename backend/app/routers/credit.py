@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
@@ -27,6 +27,8 @@ def get_credit_risk(customer_id: int, new_order_amount: float = 0, db: Session =
     from app.models import Customer
 
     customer = db.query(Customer).filter_by(id=customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
     aging = compute_aging(db, customer_id)
     risk = assess_credit_risk(customer.name, aging["total_outstanding"], aging["oldest_days_overdue"], new_order_amount)
     risk["total_exposure"] = aging["total_outstanding"] + new_order_amount  # deterministic, don't trust the model's echo

@@ -18,3 +18,8 @@ def test_credit_ledger_returns_aging(db):
     body = response.json()
     assert body["total_outstanding"] == 100000
     assert body["oldest_days_overdue"] >= 30
+
+
+def test_get_credit_risk_for_nonexistent_customer_returns_404(db):
+    response = client.get("/credit/999999/risk")
+    assert response.status_code == 404
