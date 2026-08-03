@@ -75,14 +75,21 @@ def clean_khata_entries(khata: pd.DataFrame) -> pd.DataFrame:
 def resolve_ambiguous_products(stock: pd.DataFrame) -> list[dict]:
     """Step 3 (§4.4): hand ambiguous product names to Agent 1, dedupe by (name, variant)."""
     seen = {}
+    qty_by_key = {}
     unique_names = stock["product_name"].unique()
     for i, raw_name in enumerate(unique_names, 1):
         cleaned = clean_product_name(raw_name)
         key = (cleaned["name"], cleaned["variant"])
         seen[key] = cleaned
+        raw_qty = stock.loc[stock["product_name"] == raw_name, "qty"].sum()
+        qty_by_key[key] = qty_by_key.get(key, 0) + max(raw_qty, 0)  # negative qty is a data-entry error in the messy source, don't let it net out real stock
         if i % 25 == 0 or i == len(unique_names):
             print(f"    ...{i}/{len(unique_names)} processed")
-    return list(seen.values())
+
+    result = []
+    for key, cleaned in seen.items():
+        result.append({**cleaned, "qty": qty_by_key[key]})
+    return result
 
 
 def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, whatsapp: list[dict], rates: pd.DataFrame) -> dict:
@@ -90,7 +97,7 @@ def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, what
     products = []
     products_by_name = {}
     for entry in catalog:
-        product = Product(name=entry["name"], brand=entry["brand"], category=entry["category"], unit="bag", hsn_code=entry["hsn"], current_stock=0)
+        product = Product(name=entry["name"], brand=entry["brand"], category=entry["category"], unit="bag", hsn_code=entry["hsn"], current_stock=entry.get("qty", 0))
         db.add(product)
         products.append(product)
         products_by_name[entry["name"]] = product
