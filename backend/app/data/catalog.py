@@ -27,3 +27,11 @@ HSN_BY_CATEGORY = {
     "Paints": "3208",
     "Hardware": "7318",
 }
+UNIT_BY_CATEGORY = {
+    "Cement": "bag",
+    "Steel": "ton",
+    "Pipes": "piece",
+    "Electrical": "coil",
+    "Paints": "litre",
+    "Hardware": "piece",
+}

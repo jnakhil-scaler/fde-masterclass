@@ -6,9 +6,19 @@ from typing import Optional
 import pandas as pd
 
 from app.agents.cleaning import clean_product_name
+from app.data.catalog import UNIT_BY_CATEGORY
 from app.models import Product, Customer, Supplier, SupplierRateCard, Invoice, CreditLedger, WhatsappMessage
 
 RAW_DIR = Path(__file__).parent / "raw"
+
+_PRICE_RE = re.compile(r"(\d+(?:\.\d+)?)")
+
+
+def _parse_rate_price(price_text):
+    if not isinstance(price_text, str):
+        return None
+    match = _PRICE_RE.search(price_text)
+    return float(match.group(1)) if match else None
 
 
 def extract() -> dict:
@@ -97,7 +107,7 @@ def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, what
     products = []
     products_by_name = {}
     for entry in catalog:
-        product = Product(name=entry["name"], brand=entry["brand"], category=entry["category"], unit="bag", hsn_code=entry["hsn"], current_stock=entry.get("qty", 0))
+        product = Product(name=entry["name"], brand=entry["brand"], category=entry["category"], unit=UNIT_BY_CATEGORY.get(entry["category"], "piece"), hsn_code=entry["hsn"], current_stock=entry.get("qty", 0))
         db.add(product)
         products.append(product)
         products_by_name[entry["name"]] = product
@@ -137,6 +147,19 @@ def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, what
         db.add(supplier)
         suppliers_by_name[name] = supplier
     db.flush()
+
+    for _, row in rates.iterrows():
+        supplier = suppliers_by_name.get(row["supplier_name"])
+        product = products_by_name.get(row["product_name"])
+        if supplier and product:
+            db.add(SupplierRateCard(
+                supplier_id=supplier.id,
+                product_id=product.id,
+                price=_parse_rate_price(row["price"]),
+                unit=row["unit"],
+                date=pd.Timestamp(row["as_of_date"]),
+                discount_tier_text=row.get("discount_text"),
+            ))
 
     db.commit()
     return {

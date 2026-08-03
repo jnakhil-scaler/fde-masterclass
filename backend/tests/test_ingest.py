@@ -1,9 +1,10 @@
+import pandas as pd
 import pytest
 
 from app.agents.claude_client import has_real_api_key
 from app.data.generate_data import generate_all
 from app.data.ingest import extract, clean_tally_dates_and_amounts, clean_khata_entries, resolve_ambiguous_products, load, verify
-from app.models import Invoice, CreditLedger, Product
+from app.models import Invoice, CreditLedger, Product, SupplierRateCard
 
 pytestmark_agent = pytest.mark.skipif(not has_real_api_key(), reason="requires a real (non-placeholder) Anthropic API key")
 
@@ -49,3 +50,31 @@ def test_load_and_verify_populate_postgres(db):
     report = verify(db)
     assert report["products"] == stats["products"]
     assert db.query(Product).count() > 0
+
+
+def test_load_inserts_supplier_rate_cards_and_maps_unit_by_category(db):
+    catalog = [
+        {"name": "Ambuja Cement", "brand": "Ambuja", "variant": "50 KG Bag", "category": "Cement", "hsn": "2523"},
+        {"name": "TMT Sariya 10mm", "brand": "Generic", "variant": "10mm", "category": "Steel", "hsn": "7213"},
+    ]
+    tally = pd.DataFrame(columns=["date", "amount", "gst_number", "product_name", "qty"])
+    khata = pd.DataFrame(columns=["customer_name", "date_text", "amount_text", "amount", "note"])
+    rates = pd.DataFrame([{
+        "supplier_name": "Supplier 1",
+        "product_name": "Ambuja Cement",
+        "price": "380/bag",
+        "unit": "bag",
+        "as_of_date": "2024-01-01",
+        "discount_text": "5% above 500 bags",
+    }])
+
+    load(db, catalog=catalog, tally=tally, khata=khata, whatsapp=[], rates=rates)
+
+    rate_card = db.query(SupplierRateCard).one()
+    assert rate_card.price == 380.0
+    assert rate_card.unit == "bag"
+
+    cement = db.query(Product).filter_by(name="Ambuja Cement").one()
+    steel = db.query(Product).filter_by(name="TMT Sariya 10mm").one()
+    assert cement.unit == "bag"
+    assert steel.unit == "ton"
