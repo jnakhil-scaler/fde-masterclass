@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FDE Engagement Brief — Gupta Traders</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f172a; --text: #334155; --muted: #64748b; --faint: #94a3b8;
+    --line: #e2e8f0; --wash: #f8fafc; --surface: #f1f5f9;
+    --red: #dc2626; --red-bg: #fef2f2; --red-b: #fecaca;
+    --amber: #d97706; --amber-bg: #fffbeb; --amber-b: #fde68a;
+    --green: #16a34a; --green-bg: #f0fdf4; --green-b: #bbf7d0;
+    --blue: #2563eb; --blue-bg: #eff6ff; --blue-b: #bfdbfe;
+    --indigo: #4f46e5; --indigo-bg: #eef2ff; --indigo-b: #c7d2fe;
+    --teal: #0d9488; --teal-bg: #f0fdfa; --teal-b: #99f6e4;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: #dde3ea; color: var(--text); line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  .doc { max-width:880px; margin:32px auto; background:#fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.04); }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(145deg, #1a1207 0%, #292011 50%, #1f1a0e 100%);
+    padding: 52px 60px 48px; color: #fff; position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content:''; position:absolute; top:-30%; right:-5%;
+    width:350px; height:350px;
+    background: radial-gradient(circle, rgba(217,119,6,0.12) 0%, transparent 70%);
+  }
+  .hero-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:10px; font-weight:700; letter-spacing:0.14em; text-transform:uppercase;
+    color: #fbbf24; background: rgba(217,119,6,0.15);
+    padding:5px 16px; border-radius:4px; margin-bottom:20px;
+  }
+  .hero h1 { font-size:28px; font-weight:900; letter-spacing:-0.035em; line-height:1.2; max-width:640px; }
+  .hero h1 span { color: #fbbf24; }
+  .hero .tagline { font-size:14px; color:#a8a090; margin-top:10px; max-width:560px; line-height:1.6; }
+  .meta-row { display:flex; flex-wrap:wrap; gap:24px; margin-top:28px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.06); }
+  .mi { font-size:11px; text-transform:uppercase; letter-spacing:0.06em; }
+  .mi .l { color:var(--faint); } .mi .v { color:#e2e8f0; font-weight:600; margin-top:2px; }
+
+  /* BODY */
+  .body { padding:52px 60px 60px; }
+  .sec { margin-bottom:48px; }
+  .sec:last-child { margin-bottom:0; }
+  .sec-num { font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600;
+    letter-spacing:0.12em; text-transform:uppercase; color:var(--amber); margin-bottom:10px; }
+  .sec h2 { font-size:20px; font-weight:800; color:var(--ink); letter-spacing:-0.025em; line-height:1.3; margin-bottom:16px; }
+  p { font-size:14.5px; margin-bottom:14px; }
+  p:last-child { margin-bottom:0; }
+  strong { color: var(--ink); }
+
+  .alert { padding:20px 24px; border-radius:8px; border-left:4px solid; font-size:14px; margin:20px 0; }
+  .alert-red { background:var(--red-bg); border-color:var(--red); }
+  .alert-amber { background:var(--amber-bg); border-color:var(--amber); }
+  .alert-blue { background:var(--blue-bg); border-color:var(--blue); }
+  .alert-green { background:var(--green-bg); border-color:var(--green); }
+  .alert-teal { background:var(--teal-bg); border-color:var(--teal); }
+  .at { font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px; }
+  .alert-red .at { color:var(--red); } .alert-amber .at { color:var(--amber); }
+  .alert-blue .at { color:var(--blue); } .alert-green .at { color:var(--green); }
+  .alert-teal .at { color:var(--teal); }
+
+  .quote { border-left:3px solid var(--amber-b); padding:14px 22px; margin:20px 0;
+    font-style:italic; color:var(--muted); font-size:14.5px; background:var(--wash); border-radius:0 6px 6px 0; }
+  .quote .attr { font-style:normal; font-weight:700; color:var(--text); margin-top:10px; font-size:12px; }
+
+  .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:20px 0; }
+  .m-card { padding:18px 14px; border-radius:8px; background:var(--wash); border:1px solid var(--surface); text-align:center; }
+  .mn { font-size:24px; font-weight:900; color:var(--ink); letter-spacing:-0.03em; line-height:1; }
+  .mn.bad { color:var(--red); } .mn.warn { color:var(--amber); } .mn.ok { color:var(--green); }
+  .ml { font-size:10px; color:var(--muted); margin-top:6px; text-transform:uppercase; letter-spacing:0.05em; font-weight:700; }
+
+  /* System cards */
+  .sys-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:24px 0; }
+  .sys-card { padding:20px; border-radius:10px; border:1px dashed; }
+  .sys-legacy { border-color:var(--red-b); background:var(--red-bg); }
+  .sys-legacy .sys-tag { color:var(--red); }
+  .sys-modern { border-color:var(--green-b); background:var(--green-bg); }
+  .sys-modern .sys-tag { color:var(--green); }
+  .sys-tag { font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:6px; }
+  .sys-title { font-size:14px; font-weight:700; color:var(--ink); margin-bottom:4px; }
+  .sys-desc { font-size:12px; color:var(--muted); line-height:1.6; }
+  .sys-example {
+    margin-top:10px; padding:10px 14px; border-radius:6px;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; line-height:1.6;
+    background:rgba(0,0,0,0.04); color:var(--text); white-space:pre-wrap;
+  }
+
+  /* Data table */
+  .d-table { width:100%; border-collapse:collapse; margin:20px 0; font-size:13px; }
+  .d-table th { text-align:left; padding:10px 14px; font-size:10px; text-transform:uppercase;
+    letter-spacing:0.06em; font-weight:700; color:var(--muted); border-bottom:2px solid var(--line); }
+  .d-table td { padding:12px 14px; border-bottom:1px solid var(--surface); }
+  .d-table .old { color:var(--red); font-weight:600; }
+  .d-table .new { color:var(--green); font-weight:600; }
+
+  /* Pipeline */
+  .pipe { margin:28px 0; border:1px solid var(--amber-b); border-radius:12px; overflow:hidden; }
+  .pipe-h { background:var(--amber-bg); padding:14px 20px; font-size:11px; font-weight:700;
+    letter-spacing:0.08em; text-transform:uppercase; color:var(--amber); border-bottom:1px solid var(--amber-b); }
+  .pipe-row { display:grid; grid-template-columns:repeat(3,1fr); }
+  .pipe-cell { padding:22px 20px; border-right:1px solid var(--amber-b); position:relative; }
+  .pipe-cell:last-child { border-right:none; }
+  .pipe-cell::after { content:'→'; position:absolute; right:-8px; top:50%; transform:translateY(-50%);
+    font-size:16px; font-weight:700; color:var(--amber); background:#fff; padding:2px 0; z-index:1; }
+  .pipe-cell:last-child::after { display:none; }
+  .pc-num { font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600; color:var(--amber); letter-spacing:0.06em; margin-bottom:8px; }
+  .pc-title { font-size:14px; font-weight:800; color:var(--ink); margin-bottom:6px; }
+  .pc-desc { font-size:12px; color:var(--muted); line-height:1.6; }
+
+  /* Agent cards */
+  .agent-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:24px 0; }
+  .agent-card { padding:20px; border-radius:10px; border:1px solid var(--line); }
+  .ac-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center;
+    justify-content:center; font-size:18px; margin-bottom:12px; }
+  .ac-title { font-size:14px; font-weight:700; color:var(--ink); margin-bottom:4px; }
+  .ac-desc { font-size:12.5px; color:var(--muted); line-height:1.6; }
+  .ac-output { margin-top:10px; padding:8px 12px; border-radius:6px; background:var(--wash);
+    border:1px solid var(--surface); font-size:11px; color:var(--text); }
+  .ac-output strong { font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); display:block; margin-bottom:4px; }
+
+  /* Timeline */
+  .tl { margin:24px 0; }
+  .tl-item { display:grid; grid-template-columns:88px 1fr; border-left:2px solid var(--amber-b); margin-left:44px; }
+  .tl-item:last-child { border-left-color:transparent; }
+  .tl-time { font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; color:var(--amber);
+    padding:18px 0; position:relative; margin-left:-46px; text-align:right; padding-right:20px; }
+  .tl-time::after { content:''; position:absolute; right:-6px; top:24px; width:10px; height:10px;
+    border-radius:50%; background:var(--amber); border:2px solid #fff; }
+  .tl-body { padding:16px 0 28px 22px; }
+  .tb-title { font-size:15px; font-weight:700; color:var(--ink); margin-bottom:6px; }
+  .tb-desc { font-size:13px; color:var(--muted); line-height:1.7; }
+  .tb-data { margin-top:10px; padding:12px 16px; border-radius:8px; background:var(--wash);
+    border:1px solid var(--surface); font-size:12px; }
+  .tb-data strong { color:var(--ink); }
+
+  .tag { display:inline-block; padding:3px 12px; border-radius:99px; font-size:11px; font-weight:600; margin:0 4px 6px 0; }
+  .tag-amber { background:var(--amber-bg); color:var(--amber); }
+  .tag-green { background:var(--green-bg); color:var(--green); }
+  .tag-blue { background:var(--blue-bg); color:var(--blue); }
+  .tag-indigo { background:var(--indigo-bg); color:var(--indigo); }
+  .tag-teal { background:var(--teal-bg); color:var(--teal); }
+  .tag-red { background:var(--red-bg); color:var(--red); }
+
+  .divider { height:1px; background:var(--line); margin:48px 0; }
+
+  .sc-item { display:flex; align-items:flex-start; gap:14px; padding:16px 0; border-bottom:1px solid var(--surface); }
+  .sc-item:last-child { border-bottom:none; }
+  .sc-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center;
+    justify-content:center; font-size:15px; flex-shrink:0; }
+
+  .footnote { margin-top:48px; padding-top:24px; border-top:1px solid var(--line);
+    font-size:11px; color:var(--faint); font-style:italic; }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <div class="hero">
+    <div class="hero-badge">🔶 FDE Engagement Brief — The Real FDE Simulation</div>
+    <h1>Gupta Building Materials:<br><span>From Khata Books to Cloud + AI</span></h1>
+    <p class="tagline">A 22-year-old building materials distributor in Indore, running a ₹12 Cr business on Excel sheets, a physical ledger, WhatsApp messages, and one terrified accountant.</p>
+    <div class="meta-row">
+      <div class="mi"><div class="l">Client</div><div class="v">Gupta Building Materials</div></div>
+      <div class="mi"><div class="l">Industry</div><div class="v">Building Materials Distribution (MSME)</div></div>
+      <div class="mi"><div class="l">Location</div><div class="v">Indore, Madhya Pradesh</div></div>
+      <div class="mi"><div class="l">Revenue</div><div class="v">₹12 Cr / year</div></div>
+      <div class="mi"><div class="l">Employees</div><div class="v">18 people</div></div>
+      <div class="mi"><div class="l">FDE Timeline</div><div class="v">3 Hours (Rapid Prototype)</div></div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- ═══ SEC 1: THE CLIENT ═══ -->
+    <div class="sec">
+      <div class="sec-num">01 — Meet The Client</div>
+      <h2>Rajesh Gupta Runs a ₹12 Crore Business from a Notebook and WhatsApp</h2>
+
+      <p>Rajesh Gupta, 48, runs <strong>Gupta Building Materials</strong> — a distributor of cement, steel bars (sariya), pipes, fittings, paints, electrical wiring, and hardware in Indore. Founded by his father in 2002, the business supplies to 340+ customers: local contractors, builders, small construction companies, plumbers, and electricians across Indore, Dewas, and Ujjain.</p>
+
+      <p>The business is profitable. Rajesh knows every major customer by name. His two sons — Arjun (25, B.Tech) and Karan (22, BBA) — recently joined the business. They see the chaos their father has normalized for two decades, and they want to change it.</p>
+
+      <div class="quote">
+        "Papa runs everything from his head. He knows which contractor owes how much, which supplier gives the best rate, when to stock up on cement before monsoon. But what happens when Papa is sick for a week? Last month he was hospitalized for 4 days. Nobody knew which payments were due, two orders got missed, and we double-ordered 200 bags of Ambuja cement because the godown guy didn't check the register. We can't run a ₹12 crore business like this anymore."
+        <div class="attr">— Arjun Gupta, son of the owner</div>
+      </div>
+
+      <p>Arjun attended a tech meetup where he heard about Forward Deployed Engineers — engineers who embed with businesses to rapidly modernize their operations using AI. He reached out and said: <strong>"We don't need a 2-year ERP implementation. We need someone to come in, look at our mess, and build something that works — in days, not months."</strong></p>
+    </div>
+
+    <!-- ═══ SEC 2: THE CURRENT SYSTEMS ═══ -->
+    <div class="sec">
+      <div class="sec-num">02 — The Current "Systems" (The Mess You Inherit)</div>
+      <h2>6 Critical Business Functions, 6 Completely Disconnected Methods</h2>
+
+      <p>There is no "legacy system" in the traditional sense. There are <em>six islands of data</em>, none of which talk to each other, each maintained by a different person, each in a different format:</p>
+
+      <div class="sys-grid">
+        <div class="sys-card sys-legacy">
+          <div class="sys-tag">📦 Inventory — Excel File</div>
+          <div class="sys-title">"Stock_Register_2024.xlsx"</div>
+          <div class="sys-desc">Maintained by Santosh (godown manager) on a shared desktop. Updated at end of day — sometimes. 1,847 rows across 3 sheets. Product names are inconsistent.</div>
+          <div class="sys-example">Row 142: "Ambuja Cement 50kg"    Qty: 340
+Row 587: "ambuja cem. (50 KG)"  Qty: 85
+Row 891: "AMBUJA CEMENT 50KG"   Qty: 120
+(Same product. Three names. Which is current?)</div>
+        </div>
+
+        <div class="sys-card sys-legacy">
+          <div class="sys-tag">🧾 Billing — Tally ERP 9 (Outdated)</div>
+          <div class="sys-title">Tally ERP 9 (2016 version, not updated)</div>
+          <div class="sys-desc">Invoices generated here, but only ~60% of sales go through Tally. Cash sales are recorded in a separate bill book. GST filing is a monthly nightmare — the CA takes 3 days to reconcile.</div>
+          <div class="sys-example">Tally says: ₹8.2 Cr annual sales
+Actual sales (incl. cash): ~₹12 Cr
+Gap: ₹3.8 Cr unrecorded in any system</div>
+        </div>
+
+        <div class="sys-card sys-legacy">
+          <div class="sys-tag">📒 Credit / Udhar — Physical Khata</div>
+          <div class="sys-title">Handwritten Notebook (The "Bahi Khata")</div>
+          <div class="sys-desc">₹1.8 Crore in outstanding credit, tracked in Rajesh's personal notebook. Only he can read his handwriting. No aging analysis. No reminders. He "remembers" who's overdue.</div>
+          <div class="sys-example">"Sharma contractor - 14 Jan - 3,40,000
+ ↳ 50k liya 2 Feb, baaki 2,90,000
+ ↳ bola hai March end tak de dega"
+(Mix of Hindi/English, no structure)</div>
+        </div>
+
+        <div class="sys-card sys-legacy">
+          <div class="sys-tag">📱 Orders — WhatsApp + Phone Calls</div>
+          <div class="sys-title">Orders Come via WhatsApp, Calls, Walk-ins</div>
+          <div class="sys-desc">~35 orders/day. Contractors send WhatsApp messages like "bhai 50 bag Ultratech bhej do kal subah" or call Rajesh directly. Orders written on a chit, given to the dispatcher.</div>
+          <div class="sys-example">WhatsApp from Vinod Contractor:
+"Gupta ji 10mm sariya 2 ton
+ pipe 1 inch 50 piece
+ cement ultratech 100 bag
+ kal subah 7 baje tak site pe"
+(Unstructured, Hindi-English mix)</div>
+        </div>
+
+        <div class="sys-card sys-legacy">
+          <div class="sys-tag">🚛 Delivery — Paper Challans</div>
+          <div class="sys-title">Handwritten Delivery Challans</div>
+          <div class="sys-desc">Driver gets a handwritten slip. No GPS tracking. No delivery confirmation. Disputes happen weekly — "I ordered 100 bags, you sent 90." No proof either way.</div>
+          <div class="sys-example">Challan #2847:
+"Sharma site, AB Road - Cement 100, Sariya 1T"
+(No quantities verified at delivery.
+ No signature. No timestamp.)</div>
+        </div>
+
+        <div class="sys-card sys-legacy">
+          <div class="sys-tag">📊 Suppliers — Rajesh's Memory</div>
+          <div class="sys-title">Supplier Relationships = Owner's Head</div>
+          <div class="sys-desc">12 major suppliers. Prices negotiated verbally. Rate cards in WhatsApp messages that scroll past. No price history. No comparison. Rajesh "knows" the best rates because he's been doing this for 22 years.</div>
+          <div class="sys-example">No file exists. Knowledge lives in:
+- Rajesh's memory
+- Scattered WhatsApp messages
+- Old visiting cards in a drawer</div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="m-card"><div class="mn bad">₹1.8 Cr</div><div class="ml">Untracked Credit Outstanding</div></div>
+        <div class="m-card"><div class="mn warn">38%</div><div class="ml">Sales Not in Any Digital System</div></div>
+        <div class="m-card"><div class="mn bad">~₹15L/yr</div><div class="ml">Lost to Stock Errors & Disputes</div></div>
+        <div class="m-card"><div class="mn warn">3 days</div><div class="ml">Monthly GST Reconciliation</div></div>
+      </div>
+
+      <div class="alert alert-red">
+        <div class="at">⚠ The Bus Factor is 1</div>
+        <p style="margin:0">If Rajesh is unavailable for even a week, the business cannot function. No one else knows the credit situation, supplier rates, or customer commitments. This isn't a tech problem — it's a <strong>business continuity risk</strong>. The FDE's first job isn't building AI. It's making the business survive without one person's memory.</p>
+      </div>
+    </div>
+
+    <!-- ═══ SEC 3: WHAT THEY WANT ═══ -->
+    <div class="sec">
+      <div class="sec-num">03 — What The Client Wants</div>
+      <h2>"Take Everything from Papa's Head, Notebooks, and Excel — and Put It in One System That Thinks"</h2>
+
+      <div class="quote">
+        "I don't want an SAP implementation that takes 18 months and costs ₹40 lakhs. I want to see our inventory, our orders, our credit — everything — in one place that I can open on my phone. And if AI can tell me 'Sharma contractor hasn't paid in 60 days and just placed a new ₹5 lakh order — are you sure?', that alone is worth more than any ERP."
+        <div class="attr">— Arjun Gupta</div>
+      </div>
+
+      <p>Arjun's requirements distilled:</p>
+
+      <div class="pipe">
+        <div class="pipe-h">The Three-Layer Modernization</div>
+        <div class="pipe-row">
+          <div class="pipe-cell">
+            <div class="pc-num">Layer 1</div>
+            <div class="pc-title">Data Unification</div>
+            <div class="pc-desc">Take the Excel inventory, Tally exports, khata entries, and WhatsApp orders — clean them, normalize them, and put them in one modern database that anyone can access from any device.</div>
+          </div>
+          <div class="pipe-cell">
+            <div class="pc-num">Layer 2</div>
+            <div class="pc-title">Cloud API + Dashboard</div>
+            <div class="pc-desc">Build a web-based system accessible from Arjun's phone, the godown desktop, and the shop counter. Real-time inventory, orders, credit tracking. No VPN, no desktop app, just a URL.</div>
+          </div>
+          <div class="pipe-cell">
+            <div class="pc-num">Layer 3</div>
+            <div class="pc-title">AI Automation</div>
+            <div class="pc-desc">AI that reads WhatsApp-style orders and converts to structured data. Smart credit risk alerts. Demand forecasting for seasonal stock. Auto-GST categorization. Anomaly detection on pricing.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ═══ SEC 4: THE DATASETS ═══ -->
+    <div class="sec">
+      <div class="sec-num">04 — The Demo Datasets (What You'll Build With)</div>
+      <h2>5 Generated Datasets That Simulate Real MSME Data Chaos</h2>
+
+      <p>For the masterclass demo, we generate realistic datasets that mirror exactly what an FDE would encounter walking into Gupta Building Materials. Each dataset has <strong>intentional messiness</strong> — because clean data doesn't exist in the real world.</p>
+
+      <table class="d-table">
+        <thead>
+          <tr><th>Dataset</th><th>Format</th><th>Records</th><th>Intentional Messiness</th><th>What It Simulates</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Inventory Register</strong></td>
+            <td>Excel (.xlsx), 3 sheets</td>
+            <td>~500 SKUs</td>
+            <td class="old">Same product with 3–4 name variations. Mixed units (bag/bags/Bags/BGS). Empty cells. Merged cells. Colour-coded rows (godown guy's system). Some quantities negative.</td>
+            <td>Santosh's "Stock_Register_2024.xlsx"</td>
+          </tr>
+          <tr>
+            <td><strong>2. Sales & Billing History</strong></td>
+            <td>CSV (Tally export)</td>
+            <td>~3,000 invoices (2 yrs)</td>
+            <td class="old">Date formats vary (DD/MM/YY, DD-MMM-YYYY). Amount columns have ₹ symbols and commas. Some entries say "CASH" instead of customer name. GST numbers missing on 30% of entries.</td>
+            <td>Tally ERP 9 exported data</td>
+          </tr>
+          <tr>
+            <td><strong>3. Credit Ledger (Khata)</strong></td>
+            <td>CSV (digitized from notebook)</td>
+            <td>~340 customers, ~2,100 entries</td>
+            <td class="old">Hindi-English mix in notes. Dates written as "14 Jan" (no year). Amounts sometimes in "L" (lakhs). Partial payments noted as "50k liya." Some entries are just customer names with no amount.</td>
+            <td>Rajesh's handwritten bahi khata</td>
+          </tr>
+          <tr>
+            <td><strong>4. Order Messages</strong></td>
+            <td>JSON (simulated WhatsApp exports)</td>
+            <td>~200 messages</td>
+            <td class="old">Hinglish text. Abbreviations ("cem" = cement, "sariya" = steel bars). Quantities sometimes at start, sometimes at end. Delivery instructions mixed with order items. Voice note transcriptions included.</td>
+            <td>WhatsApp order messages from contractors</td>
+          </tr>
+          <tr>
+            <td><strong>5. Supplier Rate Cards</strong></td>
+            <td>CSV</td>
+            <td>12 suppliers, ~150 products</td>
+            <td class="old">Prices from different dates (some 6 months old). Different units per supplier (per bag vs per MT). Discount tiers mentioned in free text ("5% above 500 bags"). Some fields just say "call for rate."</td>
+            <td>Compiled from WhatsApp messages and visiting cards</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-teal">
+        <div class="at">💡 Why Generated Data Works for the Demo</div>
+        <p style="margin:0">We <strong>intentionally generate messy data</strong> because that IS the demo. The audience needs to see: "this is what real MSME data looks like — and here's how an FDE handles it." Clean data would make this a toy exercise. The mess IS the point. Each dataset is generated with a Python script that introduces realistic inconsistencies, and the FDE's first task is to wrangle it.</p>
+      </div>
+    </div>
+
+    <!-- ═══ SEC 5: AI AGENTS ═══ -->
+    <div class="sec">
+      <div class="sec-num">05 — The AI Automation Layer</div>
+      <h2>Four AI Agents That Transform How Gupta Traders Operates</h2>
+
+      <div class="agent-grid">
+        <div class="agent-card">
+          <div class="ac-icon" style="background:var(--amber-bg);">🧹</div>
+          <div class="ac-title">Agent 1: Data Cleaning & Normalization</div>
+          <div class="ac-desc">Reads the messy inventory Excel file. Uses AI to deduplicate products ("Ambuja Cement 50kg" = "ambuja cem. (50 KG)" = "AMBUJA CEMENT 50KG"). Standardizes units, fixes data types, maps to a clean product catalog. Handles the ambiguous cases no regex can solve.</div>
+          <div class="ac-output">
+            <strong>Sample Input → Output</strong>
+            "ambuja cem. (50 KG)" → { name: "Ambuja Cement", variant: "50 KG Bag", category: "Cement", brand: "Ambuja", hsn: "2523" }
+          </div>
+        </div>
+
+        <div class="agent-card">
+          <div class="ac-icon" style="background:var(--blue-bg);">📱</div>
+          <div class="ac-title">Agent 2: WhatsApp Order Parser</div>
+          <div class="ac-desc">Takes raw Hinglish WhatsApp messages from contractors and extracts structured orders: customer name, items with quantities and units, delivery address, delivery time, and urgency. Maps informal product names ("sariya 10mm") to catalog entries. Handles abbreviations, misspellings, and mixed languages.</div>
+          <div class="ac-output">
+            <strong>Sample Input → Output</strong>
+            "bhai 50 bag Ultratech bhej do kal subah Sharma site pe" → { customer: "lookup", items: [{ product: "UltraTech Cement 50KG", qty: 50 }], delivery: "Sharma site", time: "tomorrow morning" }
+          </div>
+        </div>
+
+        <div class="agent-card">
+          <div class="ac-icon" style="background:var(--red-bg);">🚨</div>
+          <div class="ac-title">Agent 3: Smart Credit Risk Analyzer</div>
+          <div class="ac-desc">Analyzes the digitized khata data + billing history. For each customer: calculates days outstanding, payment velocity, trend (improving/worsening), total exposure. When a new order comes in, checks if the customer has overdue payments and flags risk: "Sharma Contractor has ₹2.9L overdue (67 days). New order: ₹5.2L. Recommend: collect overdue before dispatch."</div>
+          <div class="ac-output">
+            <strong>Sample Alert</strong>
+            ⚠ HIGH RISK: Vinod Builders — ₹4.1L overdue (82 days), payment trend declining. New order ₹3.5L would bring total exposure to ₹7.6L (above ₹5L threshold). Suggest: Cash-on-delivery or partial advance.
+          </div>
+        </div>
+
+        <div class="agent-card">
+          <div class="ac-icon" style="background:var(--green-bg);">📊</div>
+          <div class="ac-title">Agent 4: Demand Intelligence & Reorder</div>
+          <div class="ac-desc">Analyzes 2 years of sales history. Detects seasonal patterns (cement demand spikes pre-monsoon, paint demand rises in Diwali season). Predicts next 30-day demand per product. Generates smart reorder suggestions: "UltraTech Cement: current stock 450 bags, predicted 30-day demand 1,200 bags. Reorder 800 bags by Friday to avoid stockout."</div>
+          <div class="ac-output">
+            <strong>Sample Forecast</strong>
+            📈 Monsoon approaching: Cement demand historically +40% in June–July. Current stock will last ~11 days at projected rate. Suggested PO: 2,000 bags across Ambuja (800) + UltraTech (1,200).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SEC 6: 3-HOUR BUILD PLAN ═══ -->
+    <div class="sec">
+      <div class="sec-num">06 — The 3-Hour Build Plan</div>
+      <h2>What Gets Built, Hour by Hour</h2>
+
+      <div class="tl">
+        <div class="tl-item">
+          <div class="tl-time">0:00–1:00</div>
+          <div class="tl-body">
+            <div class="tb-title">Hour 1 — Data Wrangling & AI-Powered Cleanup</div>
+            <div class="tb-desc">Generate the 5 messy datasets using Python scripts. Then build the Data Cleaning Agent: feed it the inventory Excel with 500 SKUs in inconsistent formats → AI deduplicates, normalizes, categorizes → outputs a clean product catalog. Parse the Tally CSV export: fix date formats, strip ₹ symbols, fill missing GST numbers. Digitize the khata CSV: parse Hindi-English entries into structured credit records. Load everything into a unified modern database (SQLite or PostgreSQL).</div>
+            <div class="tb-data">
+              <strong>Demo moment:</strong> Show the messy Excel side-by-side with the cleaned output. "500 SKUs with 1,847 rows and 4 naming variations per product → cleaned to 312 unique products in a normalized catalog. AI handled the ambiguous ones that no regex could."
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-time">1:00–2:00</div>
+          <div class="tl-body">
+            <div class="tb-title">Hour 2 — Cloud API + WhatsApp Order Parser + Dashboard</div>
+            <div class="tb-desc">Build a REST API layer over the cleaned database (inventory, customers, orders, credit). Build the WhatsApp Order Parser Agent: paste a Hinglish message → AI extracts structured order → maps to product catalog → creates order in the system. Build a dashboard showing: real-time inventory levels, today's orders, credit outstanding by customer (with aging), and recent AI-parsed orders.</div>
+            <div class="tb-data">
+              <strong>Demo moment:</strong> Paste a real-looking WhatsApp message: "Gupta ji 10mm sariya 2 ton aur pipe 1 inch 50 piece kal subah 7 baje Sharma site pe bhijwa dena" → Watch the AI parse it into a structured order with product IDs, quantities, delivery details → Order appears in the dashboard instantly.
+            </div>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-time">2:00–3:00</div>
+          <div class="tl-body">
+            <div class="tb-title">Hour 3 — Credit Risk Agent + Demand Intelligence + Live Demo</div>
+            <div class="tb-desc">Build the Credit Risk Agent: when an order is placed, check the customer's payment history and flag risk. Build the Demand Intelligence Agent: analyze 2 years of sales data, detect seasonal patterns, generate reorder alerts. Integrate everything into the dashboard. Run a live demo: process 5 orders end-to-end — including one from a high-risk customer (watch the system flag it) and one that triggers a low-stock reorder alert.</div>
+            <div class="tb-data">
+              <strong>Demo moment:</strong> A new WhatsApp order comes in from "Vinod Builders" for ₹5.2L of materials. The system parses it, checks credit history, and flashes: "⚠ Vinod Builders has ₹4.1L overdue for 82 days. Total exposure would reach ₹9.3L. Recommend: require advance payment." Arjun Gupta would have had no idea about this without checking Papa's notebook.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ═══ SEC 7: BEFORE vs AFTER ═══ -->
+    <div class="sec">
+      <div class="sec-num">07 — Before vs. After</div>
+      <h2>The Transformation Gupta Traders Sees on Day 1</h2>
+
+      <table class="d-table">
+        <thead><tr><th>Function</th><th>Before (Today)</th><th>After (With FDE)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Inventory</strong></td>
+            <td class="old">Excel file, updated end-of-day (maybe), no one trusts the numbers</td>
+            <td class="new">Clean product catalog, real-time stock levels, accessible from any phone</td>
+          </tr>
+          <tr>
+            <td><strong>Orders</strong></td>
+            <td class="old">WhatsApp messages → chit → verbal instruction to dispatcher</td>
+            <td class="new">AI parses WhatsApp → structured order → inventory check → dispatch</td>
+          </tr>
+          <tr>
+            <td><strong>Credit/Udhar</strong></td>
+            <td class="old">Rajesh's handwritten notebook, only he can read it</td>
+            <td class="new">Digital ledger with aging analysis, auto-alerts on overdue, risk scoring</td>
+          </tr>
+          <tr>
+            <td><strong>New Order Risk Check</strong></td>
+            <td class="old">Rajesh "remembers" if the customer owes money. Sometimes he doesn't.</td>
+            <td class="new">AI checks credit history instantly, flags risk before dispatch</td>
+          </tr>
+          <tr>
+            <td><strong>Reordering Stock</strong></td>
+            <td class="old">Rajesh notices shelves look empty. Orders based on gut feel.</td>
+            <td class="new">AI predicts demand, sends reorder alerts 5 days before stockout</td>
+          </tr>
+          <tr>
+            <td><strong>Business Continuity</strong></td>
+            <td class="old">If Rajesh is unavailable → business stops</td>
+            <td class="new">Arjun and Karan can run everything from their phones</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ═══ SEC 8: TECH STACK ═══ -->
+    <div class="sec">
+      <div class="sec-num">08 — Tech Stack for the Demo</div>
+      <h2>Built With Tools an FDE Would Actually Use</h2>
+
+      <div class="sys-grid">
+        <div class="sys-card sys-modern">
+          <div class="sys-tag">Data Layer</div>
+          <div class="sys-title">Python + Pandas + SQLite/PostgreSQL</div>
+          <div class="sys-desc">Data ingestion scripts that read Excel, CSV, JSON. Pandas for cleaning and transformation. SQLite for the demo (PostgreSQL in production). Simple, proven, fast to set up.</div>
+        </div>
+        <div class="sys-card sys-modern">
+          <div class="sys-tag">AI Layer</div>
+          <div class="sys-title">Claude API (Structured Outputs)</div>
+          <div class="sys-desc">Each agent is a specialized prompt with structured JSON output. No fine-tuning needed. No vector DB for this scale. Just smart prompt engineering with few-shot examples and guardrails.</div>
+        </div>
+        <div class="sys-card sys-modern">
+          <div class="sys-tag">API Layer</div>
+          <div class="sys-title">FastAPI / Express + REST Endpoints</div>
+          <div class="sys-desc">Clean API endpoints for inventory, orders, customers, credit. JWT auth. Request validation. Audit logging. Deployable to any cloud (AWS, Railway, Render).</div>
+        </div>
+        <div class="sys-card sys-modern">
+          <div class="sys-tag">Frontend</div>
+          <div class="sys-title">React Dashboard</div>
+          <div class="sys-desc">Single-page dashboard showing inventory, orders, credit, AI alerts. Mobile-responsive (Arjun uses his phone). Real-time updates. Clean, functional — not flashy.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SEC 9: WHY THIS WORKS ═══ -->
+    <div class="sec">
+      <div class="sec-num">09 — Why This Is the Perfect Masterclass Project</div>
+      <h2>Every Indian in the Room Knows a Gupta Traders</h2>
+
+      <p>This project works because <strong>it's not hypothetical</strong>. Every person in the audience either runs a business like this, knows someone who does, or has a family member who does. The khata book, the WhatsApp orders, the Excel "inventory" that nobody trusts — this is India's ₹54 lakh crore MSME sector in a nutshell.</p>
+
+      <p>And the FDE lesson is clear: <strong>AI isn't the hard part. The hard part is understanding the messy, human, analog reality of how a business actually operates — and building a bridge from there to a modern system.</strong> The AI is powerful only because the data foundation is right.</p>
+
+      <div style="margin:20px 0;">
+        <span class="tag tag-amber">Legacy Data Wrangling</span>
+        <span class="tag tag-amber">AI Data Cleaning</span>
+        <span class="tag tag-green">Cloud API Design</span>
+        <span class="tag tag-green">REST Architecture</span>
+        <span class="tag tag-blue">NLP Order Parsing</span>
+        <span class="tag tag-blue">Hinglish Language Processing</span>
+        <span class="tag tag-red">Credit Risk Scoring</span>
+        <span class="tag tag-indigo">Demand Forecasting</span>
+        <span class="tag tag-indigo">Anomaly Detection</span>
+        <span class="tag tag-teal">Dashboard Design</span>
+        <span class="tag tag-teal">Mobile-First UX</span>
+        <span class="tag tag-amber">MSME Domain Knowledge</span>
+      </div>
+
+      <div class="alert alert-green">
+        <div class="at">The Masterclass Takeaway</div>
+        <p style="margin:0">The audience walks away with three things: (1) A working prototype they built with their own hands, (2) the understanding that FDE work is about bridging messy reality to modern systems — not just calling APIs, and (3) the confidence that they could walk into any MSME in India and do this. <strong>That's the real FDE simulation.</strong></p>
+      </div>
+    </div>
+
+    <div class="footnote">
+      Masterclass: "The Real FDE Simulation: Build and Deploy AI in 3 hrs" · Scaler Academy · All client details (Gupta Building Materials, stakeholders, data) are fictional simulations designed for the workshop. The business patterns, data challenges, and architecture are drawn from real MSME operations across India and real FDE engagement patterns at Anthropic, OpenAI, Palantir, and Scale AI.
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
