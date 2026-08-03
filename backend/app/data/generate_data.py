@@ -17,6 +17,9 @@ PRODUCT_CATALOG = [
     ("Asian Paints Emulsion", "Paints", "litre", 1, "3208"),
 ]
 
+# Fixed 3-template set, indexed positionally below (not a generic iterable) because each
+# template needs a differently-shaped substitution (full brand, abbreviated lowercase, upper).
+# Adding a 4th variant means adding both a template here and a matching format() call below.
 NAME_VARIANT_TEMPLATES = [
     "{brand} {kg}kg",
     "{lower} ({kg} KG)",
@@ -32,11 +35,13 @@ def _name_variants(brand: str, kg: int = 50):
     ]
 
 
-def _generate_stock_register(fake: Faker, rng: random.Random) -> pd.DataFrame:
+def _generate_stock_register(fake: Faker, rng: random.Random) -> dict[str, pd.DataFrame]:
     rows = []
     for name, category, unit, _, hsn in PRODUCT_CATALOG:
         variants = _name_variants(name) if category == "Cement" else [name]
         for variant in variants:
+            # Messy unit strings on purpose: plural, upper-case, and a bag-specific abbreviation,
+            # so downstream unit-normalization has real inconsistency to clean up.
             rows.append({
                 "product_name": variant,
                 "category": category,
