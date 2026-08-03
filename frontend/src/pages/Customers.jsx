@@ -27,6 +27,9 @@ export default function Customers({ customers: customersProp }) {
     <section>
       <h2>Customers</h2>
       <table>
+        <thead>
+          <tr><th>Customer</th><th>Outstanding</th><th>Risk</th></tr>
+        </thead>
         <tbody>
           {customers.map((c) => (
             <tr key={c.id}>
