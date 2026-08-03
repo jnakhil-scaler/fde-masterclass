@@ -31,5 +31,7 @@ def demand_forecast(product_id: int, db: Session = Depends(get_db)):
 
     monthly = defaultdict(int)
     for invoice_date, qty in rows:
+        # null qty treated as 0 sales, not excluded from the month's total --
+        # acceptable simplification for demo scope, no null qty in seed data
         monthly[invoice_date.strftime("%Y-%m")] += qty or 0
     return forecast_demand(product.name, product.current_stock, dict(monthly))
