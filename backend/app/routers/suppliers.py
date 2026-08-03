@@ -25,5 +25,6 @@ def list_suppliers(db: Session = Depends(get_db)):
 @router.get("/rate-cards")
 def list_rate_cards(db: Session = Depends(get_db)):
     cards = db.query(SupplierRateCard).all()
-    return [{"supplier_id": c.supplier_id, "product_id": c.product_id, "price": float(c.price) if c.price else None,
+    return [{"supplier_id": c.supplier_id, "product_id": c.product_id,
+             "price": float(c.price) if c.price is not None else None,
              "unit": c.unit, "date": c.date.isoformat(), "discount_tier_text": c.discount_tier_text} for c in cards]

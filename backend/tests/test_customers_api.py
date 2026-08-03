@@ -17,3 +17,8 @@ def test_create_and_list_customers(db):
 
     fetched = client.get(f"/customers/{created['id']}").json()
     assert fetched["name"] == "Rajesh Kumar"
+
+
+def test_get_nonexistent_customer_returns_404(db):
+    response = client.get("/customers/999999")
+    assert response.status_code == 404
