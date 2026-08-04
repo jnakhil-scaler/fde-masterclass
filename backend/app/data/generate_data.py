@@ -81,7 +81,7 @@ def _generate_tally_export(fake: Faker, rng: random.Random) -> pd.DataFrame:
         qty = base_qty * 3 if (is_cement and date.month in MONSOON_MONTHS) else base_qty
         rows.append({
             "date": date.strftime(rng.choice(date_formats)),
-            "customer": rng.choice(["CASH", fake.company()]),
+            "customer": rng.choice(["CASH", f"{fake.name()} {rng.choice(['Contractor', 'Builders', 'Construction', 'Enterprises'])}"]),
             "product_name": product_name,
             "qty": qty,
             "amount": f"₹{qty * rng.randint(340, 420):,}",
@@ -128,10 +128,13 @@ def _generate_whatsapp_orders(fake: Faker, rng: random.Random) -> list:
     return messages
 
 
+SUPPLIER_NAME_SUFFIXES = ["Traders", "Building Materials", "Steel & Cement Co.", "Hardware Agency", "Enterprises", "& Sons", "Trading Co.", "Suppliers", "Agency", "& Brothers"]
+
+
 def _generate_supplier_rates(fake: Faker, rng: random.Random) -> pd.DataFrame:
     rows = []
-    for s in range(1, 13):
-        supplier = f"Supplier {s}"
+    for _ in range(1, 13):
+        supplier = f"{fake.last_name()} {rng.choice(SUPPLIER_NAME_SUFFIXES)}"
         for name, _, unit, _, _ in PRODUCT_CATALOG:
             rows.append({
                 "supplier_name": supplier,
@@ -145,7 +148,7 @@ def _generate_supplier_rates(fake: Faker, rng: random.Random) -> pd.DataFrame:
 
 
 def generate_all(seed: int = 42, total_skus: int = 500):
-    fake = Faker()
+    fake = Faker("en_IN")
     Faker.seed(seed)
     rng = random.Random(seed)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
