@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.agents.credit_risk import assess_credit_risk
 from app.db import get_db
-from app.models import Order, OrderItem, Customer
+from app.models import Order, OrderItem, Customer, Product
 from app.routers.credit import compute_aging
 from app.schemas import OrderIn
 
@@ -48,5 +48,27 @@ def create_order(payload: OrderIn, db: Session = Depends(get_db)):
 
 @router.get("")
 def list_orders(db: Session = Depends(get_db)):
-    orders = db.query(Order).all()
-    return [{"id": o.id, "customer_id": o.customer_id, "status": o.status, "source": o.source} for o in orders]
+    orders = db.query(Order).order_by(Order.order_date.desc()).all()
+    result = []
+    for o in orders:
+        customer = db.query(Customer).filter_by(id=o.customer_id).first()
+        items = []
+        for item in o.items:
+            product = db.query(Product).filter_by(id=item.product_id).first()
+            items.append({
+                "product_id": item.product_id,
+                "product_name": product.name if product else f"Product {item.product_id}",
+                "qty": item.qty,
+                "unit_price": float(item.unit_price),
+            })
+        result.append({
+            "id": o.id,
+            "order_date": o.order_date.isoformat(),
+            "customer_id": o.customer_id,
+            "customer_name": customer.name if customer else f"Customer {o.customer_id}",
+            "source": o.source,
+            "status": o.status,
+            "total_amount": float(o.total_amount),
+            "items": items,
+        })
+    return result
