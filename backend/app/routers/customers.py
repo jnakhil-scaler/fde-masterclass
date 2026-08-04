@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Customer
-from app.schemas import CustomerIn, CustomerOut
+from app.schemas import CustomerIn, CustomerOut, CustomerUpdate
 
 router = APIRouter(prefix="/customers", tags=["customers"])
 
@@ -12,6 +12,18 @@ router = APIRouter(prefix="/customers", tags=["customers"])
 def create_customer(payload: CustomerIn, db: Session = Depends(get_db)):
     customer = Customer(**payload.model_dump())
     db.add(customer)
+    db.commit()
+    db.refresh(customer)
+    return customer
+
+
+@router.patch("/{customer_id}", response_model=CustomerOut)
+def update_customer(customer_id: int, payload: CustomerUpdate, db: Session = Depends(get_db)):
+    customer = db.query(Customer).filter_by(id=customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(customer, field, value)
     db.commit()
     db.refresh(customer)
     return customer

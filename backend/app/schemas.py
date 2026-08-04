@@ -28,6 +28,12 @@ class CustomerOut(CustomerIn):
     id: int
 
 
+class CustomerUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    area: Optional[str] = None
+
+
 class SupplierIn(BaseModel):
     name: str
     contact: Optional[str] = None
