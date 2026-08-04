@@ -1,14 +1,18 @@
 import { useState } from 'react'
 import Overview from './pages/Overview'
 import Orders from './pages/Orders'
+import Products from './pages/Products'
 import Customers from './pages/Customers'
 import Suppliers from './pages/Suppliers'
+import Parser from './pages/Parser'
 
 const TABS = {
   Overview: Overview,
   Orders: Orders,
+  Products: Products,
   Customers: Customers,
   Suppliers: Suppliers,
+  Parser: Parser,
 }
 
 export default function App() {

@@ -9,14 +9,18 @@ describe('App', () => {
   beforeEach(() => {
     api.getProducts.mockResolvedValue([])
     api.getOrders.mockResolvedValue([])
+    api.getTopOutstandingCustomers.mockResolvedValue([])
+    api.getCustomers.mockResolvedValue([])
   })
 
-  it('renders all four tabs and defaults to Overview', () => {
+  it('renders all tabs and defaults to Overview', () => {
     render(<App />)
     expect(screen.getByRole('tab', { name: 'Overview' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Orders' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Products' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Customers' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Suppliers' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Parser' })).toBeInTheDocument()
   })
 
   it('switches tabs on click', () => {
