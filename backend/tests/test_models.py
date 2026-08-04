@@ -1,4 +1,4 @@
-from app.models import Product, Customer, Order, OrderItem, Invoice, CreditLedger, Supplier, SupplierRateCard, WhatsappMessage
+from app.models import Product, ProductVariant, Customer, Order, OrderItem, Invoice, CreditLedger, Supplier, SupplierRateCard, WhatsappMessage
 
 
 def test_can_create_product_and_query_it(db):
@@ -27,6 +27,34 @@ def test_order_links_to_customer_and_items(db):
     fetched = db.query(Order).filter_by(customer_id=customer.id).first()
     assert len(fetched.items) == 1
     assert fetched.items[0].qty == 2
+
+
+def test_product_variant_links_raw_names_to_normalized_product(db):
+    product = Product(name="Ambuja Cement", brand="Ambuja", category="Cement", unit="bag", hsn_code="2523", current_stock=340)
+    db.add(product)
+    db.commit()
+
+    db.add(ProductVariant(raw_name="ambuja cem. (50 KG)", product_id=product.id))
+    db.add(ProductVariant(raw_name="AMBUJA CEMENT 50KG", product_id=product.id))
+    db.add(ProductVariant(raw_name="Ambuja Cement 50kg", product_id=product.id))
+    db.commit()
+
+    fetched = db.query(ProductVariant).filter_by(product_id=product.id).all()
+    raw_names = {variant.raw_name for variant in fetched}
+    assert raw_names == {"ambuja cem. (50 KG)", "AMBUJA CEMENT 50KG", "Ambuja Cement 50kg"}
+
+
+def test_order_total_amount_persists(db):
+    customer = Customer(name="Vinod Builders", phone="9000000000", area="Indore")
+    db.add(customer)
+    db.commit()
+
+    order = Order(customer_id=customer.id, source="whatsapp", total_amount=760000)
+    db.add(order)
+    db.commit()
+
+    fetched = db.query(Order).filter_by(customer_id=customer.id).first()
+    assert fetched.total_amount == 760000
 
 
 def test_whatsapp_message_stores_raw_metadata_as_jsonb(db):

@@ -20,6 +20,14 @@ class Product(Base):
     current_stock: Mapped[int] = mapped_column(Integer, default=0)
 
 
+class ProductVariant(Base):
+    __tablename__ = "product_variants"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    raw_name: Mapped[str] = mapped_column(String(200))
+    product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
+
+
 class Customer(Base):
     __tablename__ = "customers"
 
@@ -39,6 +47,7 @@ class Order(Base):
     source: Mapped[str] = mapped_column(String(20))
     delivery_address: Mapped[Optional[str]] = mapped_column(String(300), nullable=True)
     delivery_time: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    total_amount: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
 
     items: Mapped[list["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")
 
