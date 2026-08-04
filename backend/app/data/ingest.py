@@ -7,7 +7,7 @@ import pandas as pd
 
 from app.agents.cleaning import clean_product_name
 from app.data.catalog import UNIT_BY_CATEGORY
-from app.models import Product, Customer, Supplier, SupplierRateCard, Invoice, CreditLedger, WhatsappMessage
+from app.models import Product, ProductVariant, Customer, Supplier, SupplierRateCard, Invoice, CreditLedger, WhatsappMessage
 
 RAW_DIR = Path(__file__).parent / "raw"
 
@@ -26,8 +26,12 @@ def extract() -> dict:
     stock_sheets = pd.read_excel(RAW_DIR / "stock_register.xlsx", sheet_name=None)
     stock = pd.concat(stock_sheets.values(), ignore_index=True)
     tally = pd.read_csv(RAW_DIR / "tally_export.csv")
-    khata = pd.read_csv(RAW_DIR / "khata_ledger.csv")
+    # dtype pinned: a bare read_csv coerces customer_phone (e.g. "+919876543210") to int64,
+    # silently stripping the "+91" prefix — force it to stay a string.
+    khata = pd.read_csv(RAW_DIR / "khata_ledger.csv", dtype={"customer_phone": str})
     whatsapp = json.loads((RAW_DIR / "whatsapp_orders.json").read_text())
+    # supplier_rates.csv's "contact" column ("FirstName - +91XXXXXXXXXX") is non-numeric,
+    # so pandas infers it as object/str without help — verified empirically, no dtype pin needed.
     rates = pd.read_csv(RAW_DIR / "supplier_rates.csv")
     return {"stock": stock, "tally": tally, "khata": khata, "whatsapp": whatsapp, "rates": rates}
 
@@ -86,6 +90,7 @@ def resolve_ambiguous_products(stock: pd.DataFrame) -> list[dict]:
     """Step 3 (§4.4): hand ambiguous product names to Agent 1, dedupe by (name, variant)."""
     seen = {}
     qty_by_key = {}
+    raw_names_by_key = {}
     unique_names = stock["product_name"].unique()
     for i, raw_name in enumerate(unique_names, 1):
         try:
@@ -97,12 +102,13 @@ def resolve_ambiguous_products(stock: pd.DataFrame) -> list[dict]:
         seen[key] = cleaned
         raw_qty = stock.loc[stock["product_name"] == raw_name, "qty"].sum()
         qty_by_key[key] = qty_by_key.get(key, 0) + max(raw_qty, 0)  # negative qty is a data-entry error in the messy source, don't let it net out real stock
+        raw_names_by_key.setdefault(key, []).append(raw_name)
         if i % 25 == 0 or i == len(unique_names):
             print(f"    ...{i}/{len(unique_names)} processed")
 
     result = []
     for key, cleaned in seen.items():
-        result.append({**cleaned, "qty": qty_by_key[key]})
+        result.append({**cleaned, "qty": qty_by_key[key], "raw_names": raw_names_by_key[key]})
     return result
 
 
@@ -110,6 +116,7 @@ def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, what
     """Step 4 (§4.4): insert into Postgres in dependency order."""
     products = []
     products_by_name = {}
+    variant_count = 0
     for entry in catalog:
         product = Product(name=entry["name"], brand=entry["brand"], category=entry["category"], unit=UNIT_BY_CATEGORY.get(entry["category"], "piece"), hsn_code=entry["hsn"], current_stock=entry.get("qty", 0))
         db.add(product)
@@ -117,11 +124,21 @@ def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, what
         products_by_name[entry["name"]] = product
     db.flush()
 
+    for entry in catalog:
+        product = products_by_name[entry["name"]]
+        for raw_name in entry.get("raw_names", []):
+            db.add(ProductVariant(raw_name=raw_name, product_id=product.id))
+            variant_count += 1
+
     customers_by_name = {}
+    phone_to_customer = {}
     for name in khata["customer_name"].unique():
-        customer = Customer(name=name)
+        phone = khata.loc[khata["customer_name"] == name, "customer_phone"].iloc[0]
+        customer = Customer(name=name, phone=phone)
         db.add(customer)
         customers_by_name[name] = customer
+        if phone:
+            phone_to_customer[phone] = customer
     db.flush()
 
     for _, row in khata.iterrows():
@@ -143,11 +160,17 @@ def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, what
         ))
 
     for msg in whatsapp:
-        db.add(WhatsappMessage(raw_text=msg["raw_text"], received_at=pd.Timestamp(msg["timestamp"])))
+        matched_customer = phone_to_customer.get(msg.get("sender_phone"))
+        db.add(WhatsappMessage(
+            raw_text=msg["raw_text"],
+            received_at=pd.Timestamp(msg["timestamp"]),
+            customer_id=matched_customer.id if matched_customer else None,
+        ))
 
     suppliers_by_name = {}
     for name in rates["supplier_name"].unique():
-        supplier = Supplier(name=name)
+        contact = rates.loc[rates["supplier_name"] == name, "contact"].iloc[0]
+        supplier = Supplier(name=name, contact=contact)
         db.add(supplier)
         suppliers_by_name[name] = supplier
     db.flush()
@@ -172,6 +195,7 @@ def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, what
         "invoices": len(tally),
         "whatsapp": len(whatsapp),
         "suppliers": len(suppliers_by_name),
+        "product_variants": variant_count,
     }
 
 
@@ -184,6 +208,7 @@ def verify(db) -> dict:
         "credit_entries": db.query(CreditLedger).count(),
         "whatsapp_messages": db.query(WhatsappMessage).count(),
         "suppliers": db.query(Supplier).count(),
+        "product_variants": db.query(ProductVariant).count(),
     }
 
 

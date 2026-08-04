@@ -37,12 +37,17 @@ def has_real_api_key() -> bool:
     return len(key) > 20 and key.startswith("sk-or-v1-")
 
 
+REQUEST_TIMEOUT_SECONDS = 30.0
+
+
 def get_client() -> OpenAI:
     global _client
     if _client is None:
         _client = OpenAI(
             api_key=os.environ["ANTHROPIC_API_KEY"],
             base_url="https://openrouter.ai/api/v1",
+            timeout=REQUEST_TIMEOUT_SECONDS,
+            max_retries=1,
         )
     return _client
 
