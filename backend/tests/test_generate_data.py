@@ -52,3 +52,33 @@ def test_generate_all_respects_smaller_total_skus_for_live_demo():
     assert len(all_rows) == 70
     ambuja_variants = all_rows[all_rows["product_name"].str.contains("mbuja", case=False, na=False)]
     assert ambuja_variants["product_name"].nunique() >= 3
+
+
+def test_khata_customers_have_phone_numbers():
+    generate_all(seed=42)
+    # NOTE: dtype={"customer_phone": str} is required here because pandas' default
+    # type-sniffing on read_csv silently coerces "+91XXXXXXXXXX" strings to int64
+    # (stripping the leading "+"). Any code reading this column must pin the dtype.
+    khata = pd.read_csv(OUTPUT_DIR / "khata_ledger.csv", dtype={"customer_phone": str})
+    assert "customer_phone" in khata.columns
+    assert khata["customer_phone"].notna().all()
+    # same customer, same phone across all their rows
+    vinod = khata[khata["customer_name"] == "Vinod Builders"]
+    assert vinod["customer_phone"].nunique() == 1
+
+
+def test_whatsapp_senders_are_real_khata_customers():
+    generate_all(seed=42)
+    khata = pd.read_csv(OUTPUT_DIR / "khata_ledger.csv", dtype={"customer_phone": str})
+    known_phones = set(khata["customer_phone"])
+    whatsapp = json.loads((OUTPUT_DIR / "whatsapp_orders.json").read_text())
+    assert all(m["sender_phone"] in known_phones for m in whatsapp)
+
+
+def test_golden_path_whatsapp_message_is_from_vinod_builders():
+    generate_all(seed=42)
+    khata = pd.read_csv(OUTPUT_DIR / "khata_ledger.csv", dtype={"customer_phone": str})
+    vinod_phone = khata[khata["customer_name"] == "Vinod Builders"]["customer_phone"].iloc[0]
+    whatsapp = json.loads((OUTPUT_DIR / "whatsapp_orders.json").read_text())
+    golden_message = next(m for m in whatsapp if "10mm sariya 2 ton" in m["raw_text"])
+    assert golden_message["sender_phone"] == vinod_phone

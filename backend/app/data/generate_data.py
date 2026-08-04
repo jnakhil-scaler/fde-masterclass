@@ -90,15 +90,23 @@ def _generate_tally_export(fake: Faker, rng: random.Random) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _indian_phone_number(rng: random.Random) -> str:
+    first_digit = rng.choice("6789")
+    rest = "".join(rng.choice("0123456789") for _ in range(9))
+    return f"+91{first_digit}{rest}"
+
+
 def _generate_khata_ledger(fake: Faker, rng: random.Random) -> pd.DataFrame:
     rows = []
     customers = [fake.name() + " Contractor" for _ in range(339)] + ["Vinod Builders"]
+    customer_phones = {customer: _indian_phone_number(rng) for customer in customers}
     for customer in customers:
         entries = 1 if customer != "Vinod Builders" else 3
         for _ in range(entries):
             if customer == "Vinod Builders":
                 rows.append({
                     "customer_name": customer,
+                    "customer_phone": customer_phones[customer],
                     "date_text": "12 May",
                     "amount_text": "4.1L overdue",
                     "note": "bola hai jaldi de dega",
@@ -106,6 +114,7 @@ def _generate_khata_ledger(fake: Faker, rng: random.Random) -> pd.DataFrame:
             else:
                 rows.append({
                     "customer_name": customer,
+                    "customer_phone": customer_phones[customer],
                     "date_text": fake.date_this_year().strftime("%d %b"),
                     "amount_text": rng.choice([f"{rng.randint(10,90)}k liya", f"{rng.randint(1,9)}.{rng.randint(0,9)}L"]),
                     "note": rng.choice(["baaki agle mahine", "poora paid", ""]),
@@ -113,17 +122,21 @@ def _generate_khata_ledger(fake: Faker, rng: random.Random) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _generate_whatsapp_orders(fake: Faker, rng: random.Random) -> list:
+def _generate_whatsapp_orders(fake: Faker, rng: random.Random, khata_customers: list[tuple[str, str]]) -> list:
+    vinod_phone = next(phone for name, phone in khata_customers if name == "Vinod Builders")
     messages = [{
         "id": 1,
         "raw_text": "bhai 10mm sariya 2 ton pipe 1 inch 50 piece cement ultratech 100 bag kal subah 7 baje Sharma site pe bhijwa dena",
         "timestamp": "2026-08-01T18:22:00",
+        "sender_phone": vinod_phone,
     }]
     for i in range(2, 201):
+        customer_name, customer_phone = rng.choice(khata_customers)
         messages.append({
             "id": i,
-            "raw_text": f"{fake.first_name()} bhai {rng.randint(5,100)} bag cem chahiye kal tak",
+            "raw_text": f"{customer_name.split()[0]} bhai {rng.randint(5,100)} bag cem chahiye kal tak",
             "timestamp": fake.date_time_this_year().isoformat(),
+            "sender_phone": customer_phone,
         })
     return messages
 
@@ -158,8 +171,12 @@ def generate_all(seed: int = 42, total_skus: int = 500):
             sheet_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     _generate_tally_export(fake, rng).to_csv(OUTPUT_DIR / "tally_export.csv", index=False)
-    _generate_khata_ledger(fake, rng).to_csv(OUTPUT_DIR / "khata_ledger.csv", index=False)
-    (OUTPUT_DIR / "whatsapp_orders.json").write_text(json.dumps(_generate_whatsapp_orders(fake, rng), indent=2))
+    khata_df = _generate_khata_ledger(fake, rng)
+    khata_df.to_csv(OUTPUT_DIR / "khata_ledger.csv", index=False)
+    khata_customers = list(khata_df[["customer_name", "customer_phone"]].drop_duplicates().itertuples(index=False, name=None))
+    (OUTPUT_DIR / "whatsapp_orders.json").write_text(
+        json.dumps(_generate_whatsapp_orders(fake, rng, khata_customers), indent=2)
+    )
     _generate_supplier_rates(fake, rng).to_csv(OUTPUT_DIR / "supplier_rates.csv", index=False)
 
 
