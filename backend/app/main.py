@@ -22,6 +22,13 @@ def health():
 
 # Serve the built React frontend. Mounted last so it acts as a catch-all
 # without shadowing any API routes registered above.
-FRONTEND_DIST = Path(__file__).parent.parent.parent / "frontend" / "dist"
+#
+# This lives at backend/static/ (built assets copied in from frontend/dist/),
+# not frontend/dist/ directly, because Railway's Root Directory is set to
+# backend/ -- the build context never includes frontend/ at all, so anything
+# outside backend/ silently doesn't exist in the deployed container. Rebuild
+# with `cd frontend && npm run build && rm -rf ../backend/static && mkdir ../backend/static && cp -r dist/* ../backend/static/`
+# whenever the frontend changes, and commit the result.
+FRONTEND_DIST = Path(__file__).parent.parent / "static"
 if FRONTEND_DIST.exists():
     app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")
