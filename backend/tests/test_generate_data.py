@@ -82,3 +82,13 @@ def test_golden_path_whatsapp_message_is_from_vinod_builders():
     whatsapp = json.loads((OUTPUT_DIR / "whatsapp_orders.json").read_text())
     golden_message = next(m for m in whatsapp if "10mm sariya 2 ton" in m["raw_text"])
     assert golden_message["sender_phone"] == vinod_phone
+
+
+def test_supplier_rates_include_contact_info():
+    generate_all(seed=42)
+    rates = pd.read_csv(OUTPUT_DIR / "supplier_rates.csv")
+    assert "contact" in rates.columns
+    assert rates["contact"].notna().all()
+    # same supplier, same contact across all their product rows
+    first_supplier = rates["supplier_name"].iloc[0]
+    assert rates[rates["supplier_name"] == first_supplier]["contact"].nunique() == 1

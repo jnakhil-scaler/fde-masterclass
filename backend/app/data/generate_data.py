@@ -142,15 +142,18 @@ def _generate_whatsapp_orders(fake: Faker, rng: random.Random, khata_customers: 
 
 
 SUPPLIER_NAME_SUFFIXES = ["Traders", "Building Materials", "Steel & Cement Co.", "Hardware Agency", "Enterprises", "& Sons", "Trading Co.", "Suppliers", "Agency", "& Brothers"]
+CONTACT_FIRST_NAMES = ["Rakesh", "Suresh", "Mahesh", "Dinesh", "Naresh", "Ramesh", "Umesh", "Ganesh"]
 
 
 def _generate_supplier_rates(fake: Faker, rng: random.Random) -> pd.DataFrame:
     rows = []
     for _ in range(1, 13):
         supplier = f"{fake.last_name()} {rng.choice(SUPPLIER_NAME_SUFFIXES)}"
+        contact = f"{rng.choice(CONTACT_FIRST_NAMES)} - {_indian_phone_number(rng)}"
         for name, _, unit, _, _ in PRODUCT_CATALOG:
             rows.append({
                 "supplier_name": supplier,
+                "contact": contact,
                 "product_name": name,
                 "price": rng.choice([f"{rng.randint(300,450)}/bag", "call for rate"]),
                 "unit": unit,
