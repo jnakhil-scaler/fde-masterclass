@@ -16,8 +16,14 @@ export const api = {
   getCustomers: () => request('/customers'),
   getRateCards: () => request('/suppliers/rate-cards'),
   getCredit: (customerId) => request(`/credit/${customerId}`),
+  getTopOutstandingCustomers: (limit = 5) => request(`/credit/top-outstanding?limit=${limit}`),
   parseOrder: (rawText, senderPhone) => request('/agents/parse-order', {
     method: 'POST',
     body: JSON.stringify({ raw_text: rawText, sender_phone: senderPhone || undefined }),
   }),
+  createCustomer: (payload) => request('/customers', { method: 'POST', body: JSON.stringify(payload) }),
+  updateCustomer: (id, patch) => request(`/customers/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
+  createOrder: (payload) => request('/orders', { method: 'POST', body: JSON.stringify(payload) }),
+  createProduct: (payload) => request('/products', { method: 'POST', body: JSON.stringify(payload) }),
+  createSupplier: (payload) => request('/suppliers', { method: 'POST', body: JSON.stringify(payload) }),
 }
