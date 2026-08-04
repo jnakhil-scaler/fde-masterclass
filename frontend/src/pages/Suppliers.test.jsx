@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import Suppliers from './Suppliers'
 import { api } from '../api'
@@ -20,5 +20,17 @@ describe('Suppliers', () => {
     expect(screen.getByText(/5% above 500 bags/)).toBeInTheDocument()
     expect(screen.getByText('Ambuja Distributors')).toBeInTheDocument()
     expect(screen.getByText('Ambuja Cement')).toBeInTheDocument()
+  })
+
+  it('adds a new supplier', async () => {
+    api.createSupplier.mockResolvedValue({ id: 2, name: 'Birla Distributors', contact: '9112233445' })
+    render(<Suppliers />)
+    await waitFor(() => expect(screen.getByText('Ambuja Distributors')).toBeInTheDocument())
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Birla Distributors' } })
+    fireEvent.change(screen.getByLabelText('Contact'), { target: { value: '9112233445' } })
+    fireEvent.click(screen.getByRole('button', { name: /add supplier/i }))
+
+    await waitFor(() => expect(api.createSupplier).toHaveBeenCalledWith({ name: 'Birla Distributors', contact: '9112233445' }))
   })
 })
