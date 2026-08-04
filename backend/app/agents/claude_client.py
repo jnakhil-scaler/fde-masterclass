@@ -24,6 +24,7 @@ load_dotenv()
 _client = None
 
 OPENROUTER_MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-sonnet-5")
+OPENROUTER_MODEL_FAST = os.environ.get("OPENROUTER_MODEL_FAST", "anthropic/claude-haiku-4.5")
 
 
 def has_real_api_key() -> bool:
@@ -46,12 +47,16 @@ def get_client() -> OpenAI:
     return _client
 
 
-def call_with_tool(system: str, user_message: str, tool_schema: dict) -> dict:
-    """Send a single-tool request and return the parsed tool-call arguments dict."""
+def call_with_tool(system: str, user_message: str, tool_schema: dict, model: str = None) -> dict:
+    """Send a single-tool request and return the parsed tool-call arguments dict.
+
+    `model` defaults to OPENROUTER_MODEL (Sonnet) if not given. Pass
+    OPENROUTER_MODEL_FAST (Haiku) explicitly for high-volume, low-complexity
+    calls where cost matters more than squeezing out marginal accuracy."""
     client = get_client()
     tool_name = tool_schema["name"]
     response = client.chat.completions.create(
-        model=OPENROUTER_MODEL,
+        model=model or OPENROUTER_MODEL,
         max_tokens=1024,
         messages=[
             {"role": "system", "content": system},
