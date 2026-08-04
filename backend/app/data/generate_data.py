@@ -101,24 +101,22 @@ def _generate_khata_ledger(fake: Faker, rng: random.Random) -> pd.DataFrame:
     customers = [fake.name() + " Contractor" for _ in range(339)] + ["Vinod Builders"]
     customer_phones = {customer: _indian_phone_number(rng) for customer in customers}
     for customer in customers:
-        entries = 1 if customer != "Vinod Builders" else 3
-        for _ in range(entries):
-            if customer == "Vinod Builders":
-                rows.append({
-                    "customer_name": customer,
-                    "customer_phone": customer_phones[customer],
-                    "date_text": "12 May",
-                    "amount_text": "4.1L overdue",
-                    "note": "bola hai jaldi de dega",
-                })
-            else:
-                rows.append({
-                    "customer_name": customer,
-                    "customer_phone": customer_phones[customer],
-                    "date_text": fake.date_this_year().strftime("%d %b"),
-                    "amount_text": rng.choice([f"{rng.randint(10,90)}k liya", f"{rng.randint(1,9)}.{rng.randint(0,9)}L"]),
-                    "note": rng.choice(["baaki agle mahine", "poora paid", ""]),
-                })
+        if customer == "Vinod Builders":
+            rows.append({
+                "customer_name": customer,
+                "customer_phone": customer_phones[customer],
+                "date_text": "12 May",
+                "amount_text": "4.1L overdue",
+                "note": "bola hai jaldi de dega",
+            })
+        else:
+            rows.append({
+                "customer_name": customer,
+                "customer_phone": customer_phones[customer],
+                "date_text": fake.date_this_year().strftime("%d %b"),
+                "amount_text": rng.choice([f"{rng.randint(10,90)}k liya", f"{rng.randint(1,9)}.{rng.randint(0,9)}L"]),
+                "note": rng.choice(["baaki agle mahine", "poora paid", ""]),
+            })
     return pd.DataFrame(rows)
 
 

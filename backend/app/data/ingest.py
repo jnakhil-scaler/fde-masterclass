@@ -1,5 +1,6 @@
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -79,10 +80,27 @@ def _parse_amount_text(text: str) -> Optional[float]:
 
 
 def clean_khata_entries(khata: pd.DataFrame) -> pd.DataFrame:
-    """Step 2 (§4.4): parse Hindi-English lakh/thousand shorthand into numeric amounts."""
+    """Step 2 (§4.4): parse Hindi-English lakh/thousand shorthand into numeric amounts,
+    and year-less "DD Mon" dates into real dates (assume current year; if that's in the
+    future, assume last year)."""
     df = khata.copy()
     df["amount"] = df["amount_text"].apply(_parse_amount_text)
     assert df["amount"].notna().all(), "some khata amounts failed to parse — check amount_text format assumptions"
+
+    now = datetime.utcnow()
+
+    def _parse_date_text(date_text):
+        if not isinstance(date_text, str):
+            return now
+        try:
+            parsed = pd.to_datetime(f"{date_text} {now.year}", format="%d %b %Y")
+        except (ValueError, TypeError):
+            return now
+        if parsed > pd.Timestamp(now):
+            parsed = pd.to_datetime(f"{date_text} {now.year - 1}", format="%d %b %Y")
+        return parsed
+
+    df["date"] = df["date_text"].apply(_parse_date_text)
     return df
 
 
@@ -144,7 +162,7 @@ def load(db, catalog: list[dict], tally: pd.DataFrame, khata: pd.DataFrame, what
     for _, row in khata.iterrows():
         db.add(CreditLedger(
             customer_id=customers_by_name[row["customer_name"]].id,
-            date=pd.Timestamp.now(),
+            date=row["date"],
             type="debit",
             amount=row["amount"] or 0,
             note=row.get("note"),

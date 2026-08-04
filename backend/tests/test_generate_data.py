@@ -25,6 +25,7 @@ def test_khata_ledger_includes_vinod_builders_golden_path():
     df = pd.read_csv(OUTPUT_DIR / "khata_ledger.csv")
     vinod_rows = df[df["customer_name"] == "Vinod Builders"]
     assert len(vinod_rows) > 0
+    assert len(vinod_rows) == 1  # exactly one khata row — not 3 duplicated entries (was ₹12.3L, should be ₹4.1L)
     assert vinod_rows["amount_text"].str.contains("4.1L|4,10,000", regex=True).any()
 
 

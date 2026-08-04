@@ -32,6 +32,17 @@ def test_clean_khata_parses_lakh_shorthand_to_numeric_amount():
     assert (vinod["amount"] == 410000).any()
 
 
+def test_clean_khata_parses_date_text_into_real_dates():
+    generate_all(seed=42)
+    raw = extract()
+    cleaned = clean_khata_entries(raw["khata"])
+    assert cleaned["date"].notna().all()
+    assert cleaned["date"].dtype.kind == "M"  # datetime64
+    # no parsed date should be in the future
+    from datetime import datetime
+    assert (cleaned["date"] <= pd.Timestamp(datetime.utcnow()) + pd.Timedelta(days=1)).all()
+
+
 @pytestmark_agent
 def test_resolve_ambiguous_products_collapses_name_variants():
     # total_skus=20 (not the default 500) -- this test only needs to prove the
