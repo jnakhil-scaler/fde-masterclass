@@ -8,28 +8,58 @@ function riskBadgeClass(riskLevel) {
   return 'badge'
 }
 
+const emptyItem = () => ({ product_id: '', qty: '', unit_price: '' })
+
 export default function Orders() {
   const [orders, setOrders] = useState([])
-  const [rawText, setRawText] = useState('')
-  const [senderPhone, setSenderPhone] = useState('')
-  const [parsed, setParsed] = useState(null)
-  const [parseError, setParseError] = useState(null)
-  const [isParsing, setIsParsing] = useState(false)
+  const [customers, setCustomers] = useState([])
+  const [products, setProducts] = useState([])
+  const [customerId, setCustomerId] = useState('')
+  const [deliveryAddress, setDeliveryAddress] = useState('')
+  const [deliveryTime, setDeliveryTime] = useState('')
+  const [items, setItems] = useState([emptyItem()])
+  const [createdOrder, setCreatedOrder] = useState(null)
+  const [error, setError] = useState(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     api.getOrders().then(setOrders).catch(() => {})
+    api.getCustomers().then(setCustomers).catch(() => {})
+    api.getProducts().then(setProducts).catch(() => {})
   }, [])
 
-  const handleParse = async () => {
-    setIsParsing(true)
-    setParseError(null)
+  const updateItem = (index, field, value) => {
+    setItems((prev) => prev.map((it, i) => (i === index ? { ...it, [field]: value } : it)))
+  }
+
+  const addItemRow = () => setItems((prev) => [...prev, emptyItem()])
+  const removeItemRow = (index) => setItems((prev) => prev.filter((_, i) => i !== index))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsSaving(true)
+    setError(null)
     try {
-      const result = await api.parseOrder(rawText, senderPhone)
-      setParsed(result)
+      const payload = {
+        customer_id: Number(customerId),
+        source: 'manual',
+        delivery_address: deliveryAddress || undefined,
+        delivery_time: deliveryTime || undefined,
+        items: items.map((it) => ({
+          product_id: Number(it.product_id), qty: Number(it.qty), unit_price: Number(it.unit_price),
+        })),
+      }
+      const created = await api.createOrder(payload)
+      setCreatedOrder(created)
+      setCustomerId('')
+      setDeliveryAddress('')
+      setDeliveryTime('')
+      setItems([emptyItem()])
+      api.getOrders().then(setOrders).catch(() => {})
     } catch (err) {
-      setParseError('Could not parse this message. Please try again.')
+      setError('Could not create this order. Please try again.')
     } finally {
-      setIsParsing(false)
+      setIsSaving(false)
     }
   }
 
@@ -37,58 +67,93 @@ export default function Orders() {
     <section>
       <h2>Orders</h2>
       <div className="card">
-        <div className="section-title">AI Order Parser</div>
-        <label htmlFor="whatsapp-input">Paste WhatsApp message</label>
-        <textarea id="whatsapp-input" value={rawText} onChange={(e) => setRawText(e.target.value)} placeholder="e.g. bhai 10mm sariya 2 ton pipe 1 inch 50 piece kal subah Sharma site pe bhijwa dena" />
-        <label htmlFor="sender-phone-input">Sender phone (optional — links to a real customer and creates the order)</label>
-        <input type="text" id="sender-phone-input" value={senderPhone} onChange={(e) => setSenderPhone(e.target.value)} placeholder="+91XXXXXXXXXX" />
-        <div>
-          <button className="btn-primary" onClick={handleParse} disabled={!rawText.trim() || isParsing}>
-            {isParsing ? 'Parsing…' : 'Parse order'}
+        <div className="section-title">Add Order</div>
+        <form onSubmit={handleSubmit}>
+          <label htmlFor="order-customer">Customer</label>
+          <select id="order-customer" value={customerId} onChange={(e) => setCustomerId(e.target.value)} required>
+            <option value="">Select a customer</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+
+          {items.map((item, index) => (
+            <div key={index}>
+              <label htmlFor={`order-item-product-${index}`}>Product</label>
+              <select
+                id={`order-item-product-${index}`}
+                value={item.product_id}
+                onChange={(e) => updateItem(index, 'product_id', e.target.value)}
+                required
+              >
+                <option value="">Select a product</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+              <label htmlFor={`order-item-qty-${index}`}>Quantity</label>
+              <input type="text" id={`order-item-qty-${index}`} value={item.qty} onChange={(e) => updateItem(index, 'qty', e.target.value)} required />
+              <label htmlFor={`order-item-price-${index}`}>Unit price</label>
+              <input type="text" id={`order-item-price-${index}`} value={item.unit_price} onChange={(e) => updateItem(index, 'unit_price', e.target.value)} required />
+              {items.length > 1 && (
+                <button type="button" onClick={() => removeItemRow(index)}>Remove item</button>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={addItemRow}>Add item</button>
+
+          <label htmlFor="order-delivery-address">Delivery address (optional)</label>
+          <input type="text" id="order-delivery-address" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} />
+          <label htmlFor="order-delivery-time">Delivery time (optional)</label>
+          <input type="text" id="order-delivery-time" value={deliveryTime} onChange={(e) => setDeliveryTime(e.target.value)} />
+
+          <button className="btn-primary" type="submit" disabled={!customerId || isSaving}>
+            {isSaving ? 'Creating…' : 'Create order'}
           </button>
-        </div>
+        </form>
       </div>
 
-      {parseError && (
+      {error && (
         <div className="alert alert-error" role="alert">
-          <div className="alert-title">Parse failed</div>
-          {parseError}
+          <div className="alert-title">Create failed</div>
+          {error}
         </div>
       )}
 
-      {parsed && (
-        <div className="card">
-          <div className="section-title">Parsed Result</div>
-          <p><strong>Delivery:</strong> {parsed.delivery_address} — {parsed.delivery_time}</p>
-          <ul>
-            {parsed.items.map((item, i) => (
-              <li key={i}>{item.product_hint}: {item.qty} {item.unit}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {parsed?.created_order && (
+      {createdOrder && (
         <div className="card">
           <div className="section-title">Order Created</div>
-          <p>Order #{parsed.created_order.id} — ₹{parsed.created_order.total_amount.toLocaleString()}</p>
-          <span className={riskBadgeClass(parsed.created_order.credit_risk.risk_level)}>
-            {parsed.created_order.credit_risk.risk_level} risk
+          <p>Order #{createdOrder.id} — ₹{createdOrder.total_amount.toLocaleString()}</p>
+          <span className={riskBadgeClass(createdOrder.credit_risk.risk_level)}>
+            {createdOrder.credit_risk.risk_level} risk
           </span>
-          <p className="muted">{parsed.created_order.credit_risk.recommendation}</p>
+          <p className="muted">{createdOrder.credit_risk.recommendation}</p>
         </div>
       )}
 
       <div className="card">
-        <div className="section-title">Recent Orders</div>
+        <div className="section-title">All Orders</div>
         {orders.length === 0 ? (
           <p className="empty-state">No orders yet.</p>
         ) : (
-          <ul>
-            {orders.map((o) => (
-              <li key={o.id}>Order #{o.id} — {o.status}</li>
-            ))}
-          </ul>
+          <table>
+            <thead>
+              <tr><th>Order #</th><th>Date</th><th>Customer</th><th>Source</th><th>Items</th><th>Total</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              {orders.map((o) => (
+                <tr key={o.id}>
+                  <td>{o.id}</td>
+                  <td>{new Date(o.order_date).toLocaleDateString()}</td>
+                  <td>{o.customer_name}</td>
+                  <td>{o.source}</td>
+                  <td>{o.items.map((it) => `${it.product_name} x${it.qty}`).join(', ')}</td>
+                  <td>₹{o.total_amount.toLocaleString()}</td>
+                  <td>{o.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </section>
