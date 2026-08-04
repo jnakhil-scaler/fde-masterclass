@@ -17,19 +17,26 @@ export default function App() {
 
   return (
     <div>
-      <nav role="tablist">
-        {Object.keys(TABS).map((tab) => (
-          <button
-            key={tab}
-            role="tab"
-            aria-selected={activeTab === tab}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </button>
-        ))}
-      </nav>
-      <main>
+      <header className="app-header">
+        <div className="brand">
+          <span className="brand-mark">Gupta Building Materials</span>
+          <span className="brand-tag">Indore, Madhya Pradesh</span>
+        </div>
+        <nav className="tabs" role="tablist">
+          {Object.keys(TABS).map((tab) => (
+            <button
+              key={tab}
+              className="tab"
+              role="tab"
+              aria-selected={activeTab === tab}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+            </button>
+          ))}
+        </nav>
+      </header>
+      <main className="page">
         <ActiveComponent />
       </main>
     </div>

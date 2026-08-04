@@ -17,10 +17,23 @@ export default function Overview() {
   return (
     <section>
       <h2>Overview</h2>
-      <p>{products.length} products, {orders.length} orders today</p>
+      <div className="stat-grid">
+        <div className="stat-card">
+          <div className="stat-value">{products.length}</div>
+          <div className="stat-label">Products</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{orders.length}</div>
+          <div className="stat-label">Orders today</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">{lowStock.length}</div>
+          <div className="stat-label">Running critically low</div>
+        </div>
+      </div>
       {lowStock.length > 0 && (
-        <div role="alert">
-          Low stock alert:
+        <div className="alert" role="alert">
+          <div className="alert-title">Low stock alert</div>
           <ul>
             {lowStock.map((p) => (
               <li key={p.id}>{p.name} — {p.current_stock} left</li>
