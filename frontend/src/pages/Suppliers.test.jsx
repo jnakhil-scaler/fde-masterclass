@@ -18,19 +18,20 @@ describe('Suppliers', () => {
     render(<Suppliers />)
     await waitFor(() => expect(screen.getByText(/380/)).toBeInTheDocument())
     expect(screen.getByText(/5% above 500 bags/)).toBeInTheDocument()
-    expect(screen.getByText('Ambuja Distributors')).toBeInTheDocument()
+    expect(screen.getAllByText('Ambuja Distributors').length).toBeGreaterThan(0)
     expect(screen.getByText('Ambuja Cement')).toBeInTheDocument()
   })
 
   it('adds a new supplier', async () => {
     api.createSupplier.mockResolvedValue({ id: 2, name: 'Birla Distributors', contact: '9112233445' })
     render(<Suppliers />)
-    await waitFor(() => expect(screen.getByText('Ambuja Distributors')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText('Ambuja Cement')).toBeInTheDocument())
 
     fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'Birla Distributors' } })
     fireEvent.change(screen.getByLabelText('Contact'), { target: { value: '9112233445' } })
     fireEvent.click(screen.getByRole('button', { name: /add supplier/i }))
 
     await waitFor(() => expect(api.createSupplier).toHaveBeenCalledWith({ name: 'Birla Distributors', contact: '9112233445' }))
+    expect(await screen.findByText('Birla Distributors')).toBeInTheDocument()
   })
 })

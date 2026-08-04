@@ -57,6 +57,24 @@ export default function Suppliers() {
       )}
 
       <div className="card">
+        <div className="section-title">Suppliers</div>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Contact</th></tr>
+          </thead>
+          <tbody>
+            {suppliers.map((s) => (
+              <tr key={s.id}>
+                <td>{s.name}</td>
+                <td>{s.contact || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {suppliers.length === 0 && <p className="empty-state">No suppliers yet.</p>}
+      </div>
+
+      <div className="card">
         <table>
           <thead>
             <tr><th>Supplier</th><th>Product</th><th>Price</th><th>Discount</th></tr>

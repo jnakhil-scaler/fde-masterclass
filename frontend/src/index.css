@@ -292,7 +292,7 @@ label {
   margin-bottom: 8px;
 }
 
-textarea, input[type='text'] {
+textarea, input[type='text'], select {
   width: 100%;
   font: inherit;
   font-size: 14px;
@@ -301,11 +301,14 @@ textarea, input[type='text'] {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 12px 14px;
+}
+
+textarea {
   resize: vertical;
   min-height: 84px;
 }
 
-textarea:focus, input[type='text']:focus {
+textarea:focus, input[type='text']:focus, select:focus {
   outline: 2px solid var(--amber-b);
   outline-offset: 1px;
   border-color: var(--amber);
