@@ -16,5 +16,8 @@ export const api = {
   getCustomers: () => request('/customers'),
   getRateCards: () => request('/suppliers/rate-cards'),
   getCredit: (customerId) => request(`/credit/${customerId}`),
-  parseOrder: (rawText) => request('/agents/parse-order', { method: 'POST', body: JSON.stringify({ raw_text: rawText }) }),
+  parseOrder: (rawText, senderPhone) => request('/agents/parse-order', {
+    method: 'POST',
+    body: JSON.stringify({ raw_text: rawText, sender_phone: senderPhone || undefined }),
+  }),
 }
